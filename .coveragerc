@@ -1,0 +1,76 @@
+[run]
+# Coverage configuration for AuraStream
+
+# Source paths to measure
+source = src
+
+# Branch coverage
+branch = True
+
+# Omit patterns
+omit = 
+    */tests/*
+    */test_*
+    */__pycache__/*
+    */venv/*
+    */env/*
+    */migrations/*
+    */settings/*
+    */manage.py
+    */conftest.py
+    */setup.py
+    */__init__.py
+
+# Data file location
+data_file = .coverage
+
+# Parallel execution
+parallel = True
+
+[report]
+# Report configuration
+
+# Minimum coverage percentage
+fail_under = 80
+
+# Show missing lines
+show_missing = True
+
+# Skip covered files in report
+skip_covered = False
+
+# Precision for percentages
+precision = 2
+
+# Exclude lines from coverage
+exclude_lines =
+    # Have to re-enable the standard pragma
+    pragma: no cover
+
+    # Don't complain about missing debug-only code:
+    def __repr__
+    if self\.debug
+
+    # Don't complain if tests don't hit defensive assertion code:
+    raise AssertionError
+    raise NotImplementedError
+
+    # Don't complain if non-runnable code isn't run:
+    if 0:
+    if __name__ == .__main__.:
+
+    # Don't complain about abstract methods
+    @(abc\.)?abstractmethod
+
+    # Don't complain about type hints
+    : \.\.\.
+    : \w+ = \.\.\.
+
+[html]
+# HTML report configuration
+directory = htmlcov
+title = AuraStream Coverage Report
+
+[xml]
+# XML report configuration
+output = coverage.xml
