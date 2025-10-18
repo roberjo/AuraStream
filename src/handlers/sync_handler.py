@@ -78,7 +78,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             sentiment=sentiment_result['Sentiment'],
             score=_get_sentiment_score(sentiment_result),
             language_code=sentiment_result.get('LanguageCode', 'en'),
-            confidence=request.options.get('include_confidence', True),
+            confidence=request.options.get('include_confidence', True) if request.options else True,
             pii_detected=pii_detected,
             processing_time_ms=int((time.time() - start_time) * 1000),
             cache_hit=False,
@@ -86,7 +86,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         )
         
         # Cache the result
-        cache.store_result(request.text, response.dict())
+        cache.store_result(request.text, response.model_dump())
         
         # Record metrics
         metrics.record_sentiment_analysis(
@@ -96,7 +96,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         )
         
         logger.info(f"Successfully processed request {request_id}")
-        return _create_success_response(response.dict(), request_id, False)
+        return _create_success_response(response.model_dump(), request_id, False)
         
     except Exception as e:
         logger.error(f"Error processing request {request_id}: {str(e)}")
@@ -145,7 +145,15 @@ def _get_sentiment_score(sentiment_result: Dict[str, Any]) -> float:
     scores = sentiment_result['SentimentScore']
     
     # Return the score for the detected sentiment
-    return scores.get(sentiment, 0.0)
+    # Map sentiment to the correct key in SentimentScore
+    sentiment_key_map = {
+        'POSITIVE': 'Positive',
+        'NEGATIVE': 'Negative', 
+        'NEUTRAL': 'Neutral',
+        'MIXED': 'Mixed'
+    }
+    sentiment_key = sentiment_key_map.get(sentiment, sentiment)
+    return scores.get(sentiment_key, 0.0)
 
 
 def _create_success_response(data: Dict[str, Any], request_id: str, cache_hit: bool) -> Dict[str, Any]:
@@ -178,5 +186,5 @@ def _create_error_response(status_code: int, error_code: str, message: str, requ
             'Content-Type': 'application/json',
             'X-Request-ID': request_id
         },
-        'body': json.dumps(error_response.dict())
+        'body': json.dumps(error_response.model_dump())
     }

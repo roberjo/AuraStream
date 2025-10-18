@@ -47,7 +47,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'headers': {
                 'Content-Type': 'application/json'
             },
-            'body': json.dumps(health_response.dict())
+            'body': json.dumps(health_response.model_dump())
         }
         
     except Exception as e:

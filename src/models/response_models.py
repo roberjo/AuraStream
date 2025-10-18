@@ -2,7 +2,7 @@
 
 from typing import Optional, Dict, Any
 from pydantic import BaseModel, Field
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class SentimentAnalysisResponse(BaseModel):
@@ -10,7 +10,7 @@ class SentimentAnalysisResponse(BaseModel):
     
     sentiment: str = Field(..., description="Sentiment classification")
     score: float = Field(..., ge=0.0, le=1.0, description="Sentiment score")
-    language_code: str = Field(..., description="Language code")
+    language_code: Optional[str] = Field(None, description="Language code")
     confidence: Optional[float] = Field(None, ge=0.0, le=1.0, description="Confidence score")
     pii_detected: Optional[bool] = Field(None, description="Whether PII was detected")
     processing_time_ms: Optional[int] = Field(None, description="Processing time in milliseconds")
@@ -25,7 +25,7 @@ class AsyncJobResponse(BaseModel):
     status: str = Field(..., description="Job status")
     message: str = Field(..., description="Status message")
     estimated_completion: Optional[datetime] = Field(None, description="Estimated completion time")
-    created_at: datetime = Field(default_factory=datetime.utcnow, description="Job creation time")
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), description="Job creation time")
 
 
 class JobStatusResponse(BaseModel):
@@ -44,7 +44,7 @@ class HealthResponse(BaseModel):
     """Response model for health check."""
     
     status: str = Field(..., description="Service status")
-    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Check timestamp")
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), description="Check timestamp")
     version: str = Field(..., description="Service version")
     components: Dict[str, str] = Field(..., description="Component status")
 

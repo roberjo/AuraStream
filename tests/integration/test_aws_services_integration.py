@@ -3,7 +3,7 @@
 import pytest
 import json
 import time
-from moto import mock_dynamodb, mock_s3, mock_comprehend
+from moto import mock_aws
 import boto3
 from unittest.mock import patch
 
@@ -18,7 +18,7 @@ class TestAWSServicesIntegration:
     @pytest.fixture
     def mock_aws_services(self):
         """Mock AWS services for integration testing."""
-        with mock_dynamodb(), mock_s3(), mock_comprehend():
+        with mock_aws(['dynamodb', 's3', 'comprehend']):
             # Set up DynamoDB
             dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
             table = dynamodb.create_table(

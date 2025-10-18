@@ -3,14 +3,14 @@
 import pytest
 import os
 from unittest.mock import Mock, patch
-from moto import mock_dynamodb, mock_s3
+from moto import mock_aws
 import boto3
 
 
 @pytest.fixture
 def mock_aws_services():
     """Mock AWS services for testing."""
-    with mock_dynamodb(), mock_s3():
+    with mock_aws(['dynamodb', 's3']):
         yield
 
 

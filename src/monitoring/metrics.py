@@ -16,7 +16,8 @@ class MetricsCollector:
     
     def __init__(self):
         """Initialize metrics collector."""
-        self.cloudwatch = boto3.client('cloudwatch')
+        region = os.environ.get('AWS_REGION', 'us-east-1')
+        self.cloudwatch = boto3.client('cloudwatch', region_name=region)
         self.namespace = METRICS_NAMESPACE
         self.environment = os.environ.get('ENVIRONMENT', 'dev')
     

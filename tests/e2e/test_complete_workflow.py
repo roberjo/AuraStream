@@ -3,7 +3,7 @@
 import pytest
 import json
 import time
-from moto import mock_dynamodb, mock_s3, mock_stepfunctions, mock_comprehend
+from moto import mock_aws
 import boto3
 from unittest.mock import patch
 
@@ -19,7 +19,7 @@ class TestCompleteWorkflow:
     @pytest.fixture
     def mock_aws_services(self):
         """Mock AWS services for E2E testing."""
-        with mock_dynamodb(), mock_s3(), mock_stepfunctions(), mock_comprehend():
+        with mock_aws(['dynamodb', 's3', 'stepfunctions', 'comprehend']):
             # Set up DynamoDB tables
             dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
             

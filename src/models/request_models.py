@@ -1,7 +1,7 @@
 """Request data models for AuraStream API."""
 
 from typing import Optional, Dict, Any
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class SentimentAnalysisRequest(BaseModel):
@@ -10,14 +10,16 @@ class SentimentAnalysisRequest(BaseModel):
     text: str = Field(..., min_length=1, max_length=5000, description="Text to analyze")
     options: Optional[Dict[str, Any]] = Field(default=None, description="Analysis options")
     
-    @validator('text')
+    @field_validator('text')
+    @classmethod
     def validate_text(cls, v):
         """Validate text input."""
         if not v or not v.strip():
             raise ValueError('Text cannot be empty')
         return v.strip()
     
-    @validator('options')
+    @field_validator('options')
+    @classmethod
     def validate_options(cls, v):
         """Validate options."""
         if v is None:
@@ -44,14 +46,16 @@ class AsyncSentimentAnalysisRequest(BaseModel):
     source_id: Optional[str] = Field(default=None, description="Custom identifier for tracking")
     options: Optional[Dict[str, Any]] = Field(default=None, description="Analysis options")
     
-    @validator('text')
+    @field_validator('text')
+    @classmethod
     def validate_text(cls, v):
         """Validate text input."""
         if not v or not v.strip():
             raise ValueError('Text cannot be empty')
         return v.strip()
     
-    @validator('options')
+    @field_validator('options')
+    @classmethod
     def validate_options(cls, v):
         """Validate options."""
         if v is None:

@@ -5,7 +5,7 @@ import time
 import uuid
 import logging
 from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from src.models.request_models import AsyncSentimentAnalysisRequest
 from src.models.response_models import AsyncJobResponse, ErrorResponse
@@ -96,7 +96,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             status='PROCESSING',
             message='Job submitted successfully',
             estimated_completion=_calculate_estimated_completion(request.text),
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         # Record metrics
@@ -108,7 +108,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         )
         
         logger.info(f"Successfully submitted async job {job_id} for request {request_id}")
-        return _create_success_response(response.dict(), request_id)
+        return _create_success_response(response.model_dump(), request_id)
         
     except Exception as e:
         logger.error(f"Error processing async request {request_id}: {str(e)}")
@@ -256,7 +256,7 @@ def _calculate_estimated_completion(text: str) -> datetime:
     
     total_seconds = base_time + additional_time
     
-    return datetime.utcnow() + timedelta(seconds=total_seconds)
+    return datetime.now(timezone.utc) + timedelta(seconds=total_seconds)
 
 
 def _create_success_response(data: Dict[str, Any], request_id: str) -> Dict[str, Any]:
@@ -278,7 +278,7 @@ def _create_error_response(status_code: int, error_code: str, message: str, requ
             'code': error_code,
             'message': message,
             'request_id': request_id,
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }
     )
     
@@ -288,5 +288,5 @@ def _create_error_response(status_code: int, error_code: str, message: str, requ
             'Content-Type': 'application/json',
             'X-Request-ID': request_id
         },
-        'body': json.dumps(error_response.dict())
+        'body': json.dumps(error_response.model_dump())
     }
