@@ -1,0 +1,510 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: AuraStream - Enterprise Sentiment Analysis Platform
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 512
+    Runtime: python3.9
+    Environment:
+      Variables:
+        LOG_LEVEL: INFO
+        ENABLE_XRAY: true
+    Tracing:
+      Mode: Active
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, staging, prod]
+    Description: Environment name
+  
+  ApiKeyRequired:
+    Type: String
+    Default: "true"
+    AllowedValues: ["true", "false"]
+    Description: Whether API key is required
+
+Resources:
+  # API Gateway
+  AuraStreamApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref Environment
+      Cors:
+        AllowMethods: "'GET,POST,OPTIONS'"
+        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+        AllowOrigin: "'*'"
+      Auth:
+        ApiKeyRequired: !Ref ApiKeyRequired
+      DefinitionBody:
+        openapi: 3.0.1
+        info:
+          title: AuraStream API
+          version: 1.0.0
+        paths:
+          /analyze/sync:
+            post:
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SyncHandler.Arn}/invocations"
+              responses:
+                '200':
+                  description: Successful response
+                '400':
+                  description: Bad request
+                '401':
+                  description: Unauthorized
+                '500':
+                  description: Internal server error
+          /analyze/async:
+            post:
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AsyncHandler.Arn}/invocations"
+              responses:
+                '202':
+                  description: Accepted
+                '400':
+                  description: Bad request
+                '401':
+                  description: Unauthorized
+                '500':
+                  description: Internal server error
+          /status/{job_id}:
+            get:
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${StatusHandler.Arn}/invocations"
+              responses:
+                '200':
+                  description: Successful response
+                '404':
+                  description: Job not found
+                '401':
+                  description: Unauthorized
+          /health:
+            get:
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${HealthHandler.Arn}/invocations"
+              responses:
+                '200':
+                  description: Service healthy
+                '503':
+                  description: Service unhealthy
+
+  # Lambda Functions
+  SyncHandler:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: handlers.sync_handler.lambda_handler
+      Description: Synchronous sentiment analysis handler
+      Environment:
+        Variables:
+          SENTIMENT_CACHE_TABLE: !Ref SentimentCacheTable
+          COMPREHEND_ROLE_ARN: !GetAtt ComprehendRole.Arn
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - comprehend:DetectSentiment
+                - comprehend:DetectPiiEntities
+              Resource: '*'
+            - Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:PutItem
+                - dynamodb:UpdateItem
+              Resource: !GetAtt SentimentCacheTable.Arn
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: '*'
+      Events:
+        SyncApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref AuraStreamApi
+            Path: /analyze/sync
+            Method: post
+
+  AsyncHandler:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: handlers.async_handler.lambda_handler
+      Description: Asynchronous sentiment analysis handler
+      Environment:
+        Variables:
+          DOCUMENTS_BUCKET: !Ref DocumentsBucket
+          JOB_RESULTS_TABLE: !Ref JobResultsTable
+          STEP_FUNCTION_ARN: !Ref SentimentAnalysisStateMachine
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - s3:PutObject
+                - s3:GetObject
+              Resource: !Sub "${DocumentsBucket}/*"
+            - Effect: Allow
+              Action:
+                - dynamodb:PutItem
+                - dynamodb:GetItem
+              Resource: !GetAtt JobResultsTable.Arn
+            - Effect: Allow
+              Action:
+                - states:StartExecution
+              Resource: !Ref SentimentAnalysisStateMachine
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: '*'
+      Events:
+        AsyncApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref AuraStreamApi
+            Path: /analyze/async
+            Method: post
+
+  StatusHandler:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: handlers.status_handler.lambda_handler
+      Description: Job status handler
+      Environment:
+        Variables:
+          JOB_RESULTS_TABLE: !Ref JobResultsTable
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:GetItem
+              Resource: !GetAtt JobResultsTable.Arn
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: '*'
+      Events:
+        StatusApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref AuraStreamApi
+            Path: /status/{job_id}
+            Method: get
+
+  HealthHandler:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: handlers.health_handler.lambda_handler
+      Description: Health check handler
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: '*'
+      Events:
+        HealthApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref AuraStreamApi
+            Path: /health
+            Method: get
+
+  # DynamoDB Tables
+  SentimentCacheTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "AuraStream-SentimentCache-${Environment}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: text_hash
+          AttributeType: S
+      KeySchema:
+        - AttributeName: text_hash
+          KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      SSESpecification:
+        SSEEnabled: true
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: AuraStream
+
+  JobResultsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "AuraStream-JobResults-${Environment}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: job_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: job_id
+          KeyType: HASH
+      SSESpecification:
+        SSEEnabled: true
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: AuraStream
+
+  # S3 Bucket
+  DocumentsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "aurastream-documents-${Environment}-${AWS::AccountId}"
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteOldVersions
+            Status: Enabled
+            NoncurrentVersionExpiration:
+              NoncurrentDays: 30
+          - Id: TransitionToIA
+            Status: Enabled
+            Transitions:
+              - StorageClass: STANDARD_IA
+                TransitionInDays: 30
+              - StorageClass: GLACIER
+                TransitionInDays: 90
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: AuraStream
+
+  # Step Functions State Machine
+  SentimentAnalysisStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: !Sub "AuraStream-SentimentAnalysis-${Environment}"
+      RoleArn: !GetAtt StepFunctionRole.Arn
+      DefinitionString: !Sub |
+        {
+          "Comment": "AuraStream Sentiment Analysis Workflow",
+          "StartAt": "ProcessDocument",
+          "States": {
+            "ProcessDocument": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "FunctionName": "${ProcessDocumentFunction.Arn}",
+                "Payload.$": "$"
+              },
+              "Retry": [
+                {
+                  "ErrorEquals": ["States.ALL"],
+                  "IntervalSeconds": 2,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2.0
+                }
+              ],
+              "Catch": [
+                {
+                  "ErrorEquals": ["States.ALL"],
+                  "Next": "HandleError",
+                  "ResultPath": "$.error"
+                }
+              ],
+              "Next": "UpdateJobStatus"
+            },
+            "UpdateJobStatus": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "FunctionName": "${UpdateJobStatusFunction.Arn}",
+                "Payload.$": "$"
+              },
+              "End": true
+            },
+            "HandleError": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "FunctionName": "${UpdateJobStatusFunction.Arn}",
+                "Payload.$": "$"
+              },
+              "End": true
+            }
+          }
+        }
+
+  # Step Functions Lambda Functions
+  ProcessDocumentFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: handlers.process_document_handler.lambda_handler
+      Description: Process document for sentiment analysis
+      Environment:
+        Variables:
+          JOB_RESULTS_TABLE: !Ref JobResultsTable
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - s3:GetObject
+              Resource: !Sub "${DocumentsBucket}/*"
+            - Effect: Allow
+              Action:
+                - comprehend:StartSentimentDetectionJob
+                - comprehend:DescribeSentimentDetectionJob
+              Resource: '*'
+            - Effect: Allow
+              Action:
+                - dynamodb:UpdateItem
+              Resource: !GetAtt JobResultsTable.Arn
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: '*'
+
+  UpdateJobStatusFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: handlers.update_job_status_handler.lambda_handler
+      Description: Update job status in DynamoDB
+      Environment:
+        Variables:
+          JOB_RESULTS_TABLE: !Ref JobResultsTable
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:UpdateItem
+              Resource: !GetAtt JobResultsTable.Arn
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: '*'
+
+  # IAM Roles
+  ComprehendRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: comprehend.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+
+  StepFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: states.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: StepFunctionPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource: 
+                  - !GetAtt ProcessDocumentFunction.Arn
+                  - !GetAtt UpdateJobStatusFunction.Arn
+
+  # CloudWatch Log Groups
+  SyncHandlerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${SyncHandler}"
+      RetentionInDays: 14
+
+  AsyncHandlerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${AsyncHandler}"
+      RetentionInDays: 14
+
+  StatusHandlerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${StatusHandler}"
+      RetentionInDays: 14
+
+  HealthHandlerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${HealthHandler}"
+      RetentionInDays: 14
+
+Outputs:
+  ApiUrl:
+    Description: "API Gateway endpoint URL"
+    Value: !Sub "https://${AuraStreamApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}"
+    Export:
+      Name: !Sub "${AWS::StackName}-ApiUrl"
+
+  SentimentCacheTableName:
+    Description: "Sentiment Cache DynamoDB Table Name"
+    Value: !Ref SentimentCacheTable
+    Export:
+      Name: !Sub "${AWS::StackName}-SentimentCacheTable"
+
+  JobResultsTableName:
+    Description: "Job Results DynamoDB Table Name"
+    Value: !Ref JobResultsTable
+    Export:
+      Name: !Sub "${AWS::StackName}-JobResultsTable"
+
+  DocumentsBucketName:
+    Description: "Documents S3 Bucket Name"
+    Value: !Ref DocumentsBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-DocumentsBucket"

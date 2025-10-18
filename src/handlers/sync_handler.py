@@ -1,0 +1,182 @@
+"""Synchronous sentiment analysis handler."""
+
+import json
+import time
+import logging
+from typing import Dict, Any, Optional
+from datetime import datetime
+
+from src.models.request_models import SentimentAnalysisRequest
+from src.models.response_models import SentimentAnalysisResponse, ErrorResponse
+from src.utils.aws_clients import aws_clients
+from src.utils.validators import InputValidator
+from src.utils.constants import ERROR_CODES, SENTIMENT_TYPES
+from src.cache.sentiment_cache import SentimentCache
+from src.pii.pii_detector import PIIDetector
+from src.monitoring.metrics import MetricsCollector
+
+logger = logging.getLogger(__name__)
+metrics = MetricsCollector()
+
+
+def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
+    """
+    Lambda handler for synchronous sentiment analysis.
+    
+    Args:
+        event: Lambda event data
+        context: Lambda context
+        
+    Returns:
+        API Gateway response
+    """
+    start_time = time.time()
+    request_id = context.aws_request_id if context else "unknown"
+    
+    try:
+        # Parse request
+        request_data = json.loads(event.get('body', '{}'))
+        request = SentimentAnalysisRequest(**request_data)
+        
+        # Validate input security
+        security_check = InputValidator.validate_text_security(request.text)
+        if not security_check['is_safe']:
+            logger.warning(f"Security threat detected: {security_check['threats']}")
+            return _create_error_response(
+                ERROR_CODES['VALIDATION_ERROR'],
+                'VALIDATION_ERROR',
+                'Text contains potentially malicious content',
+                request_id
+            )
+        
+        # Initialize services
+        cache = SentimentCache()
+        pii_detector = PIIDetector()
+        
+        # Check cache first
+        cached_result = cache.get_cached_result(request.text)
+        if cached_result:
+            logger.info(f"Cache hit for request {request_id}")
+            metrics.record_cache_hit()
+            return _create_success_response(cached_result, request_id, True)
+        
+        # Detect PII if requested
+        pii_detected = False
+        if request.options and request.options.get('include_pii_detection', True):
+            pii_result = pii_detector.detect_pii(request.text)
+            pii_detected = pii_result['pii_detected']
+            
+            if pii_detected:
+                logger.info(f"PII detected in request {request_id}")
+                metrics.record_pii_detection()
+        
+        # Analyze sentiment
+        sentiment_result = _analyze_sentiment(request.text, request.options)
+        
+        # Create response
+        response = SentimentAnalysisResponse(
+            sentiment=sentiment_result['Sentiment'],
+            score=_get_sentiment_score(sentiment_result),
+            language_code=sentiment_result.get('LanguageCode', 'en'),
+            confidence=request.options.get('include_confidence', True),
+            pii_detected=pii_detected,
+            processing_time_ms=int((time.time() - start_time) * 1000),
+            cache_hit=False,
+            request_id=request_id
+        )
+        
+        # Cache the result
+        cache.store_result(request.text, response.dict())
+        
+        # Record metrics
+        metrics.record_sentiment_analysis(
+            sentiment=response.sentiment,
+            confidence=response.confidence or 0.0,
+            processing_time=response.processing_time_ms or 0
+        )
+        
+        logger.info(f"Successfully processed request {request_id}")
+        return _create_success_response(response.dict(), request_id, False)
+        
+    except Exception as e:
+        logger.error(f"Error processing request {request_id}: {str(e)}")
+        metrics.record_error()
+        return _create_error_response(
+            ERROR_CODES['INTERNAL_ERROR'],
+            'INTERNAL_ERROR',
+            'An internal error occurred',
+            request_id
+        )
+
+
+def _analyze_sentiment(text: str, options: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    Analyze sentiment using Amazon Comprehend.
+    
+    Args:
+        text: Text to analyze
+        options: Analysis options
+        
+    Returns:
+        Sentiment analysis result
+    """
+    comprehend = aws_clients.get_comprehend_client()
+    
+    params = {
+        'Text': text,
+        'LanguageCode': options.get('language_code', 'en') if options else 'en'
+    }
+    
+    response = comprehend.detect_sentiment(**params)
+    return response
+
+
+def _get_sentiment_score(sentiment_result: Dict[str, Any]) -> float:
+    """
+    Extract sentiment score from Comprehend result.
+    
+    Args:
+        sentiment_result: Comprehend API result
+        
+    Returns:
+        Sentiment score
+    """
+    sentiment = sentiment_result['Sentiment']
+    scores = sentiment_result['SentimentScore']
+    
+    # Return the score for the detected sentiment
+    return scores.get(sentiment, 0.0)
+
+
+def _create_success_response(data: Dict[str, Any], request_id: str, cache_hit: bool) -> Dict[str, Any]:
+    """Create successful API Gateway response."""
+    return {
+        'statusCode': 200,
+        'headers': {
+            'Content-Type': 'application/json',
+            'X-Request-ID': request_id,
+            'X-Cache-Hit': str(cache_hit).lower()
+        },
+        'body': json.dumps(data)
+    }
+
+
+def _create_error_response(status_code: int, error_code: str, message: str, request_id: str) -> Dict[str, Any]:
+    """Create error API Gateway response."""
+    error_response = ErrorResponse(
+        error={
+            'code': error_code,
+            'message': message,
+            'request_id': request_id,
+            'timestamp': datetime.utcnow().isoformat()
+        }
+    )
+    
+    return {
+        'statusCode': status_code,
+        'headers': {
+            'Content-Type': 'application/json',
+            'X-Request-ID': request_id
+        },
+        'body': json.dumps(error_response.dict())
+    }

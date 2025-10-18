@@ -1,0 +1,60 @@
+# SAM configuration file for AuraStream
+
+version = 0.1
+
+[default]
+[default.global.parameters]
+stack_name = "aurastream"
+s3_bucket = "aurastream-deployments"
+s3_prefix = "aurastream"
+region = "us-east-1"
+confirm_changeset = false
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=dev ApiKeyRequired=true"
+
+[default.build.parameters]
+cached = true
+parallel = true
+
+[default.deploy.parameters]
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = false
+fail_on_empty_changeset = false
+
+[staging]
+[staging.global.parameters]
+stack_name = "aurastream-staging"
+s3_bucket = "aurastream-deployments"
+s3_prefix = "aurastream-staging"
+region = "us-east-1"
+confirm_changeset = false
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=staging ApiKeyRequired=true"
+
+[staging.build.parameters]
+cached = true
+parallel = true
+
+[staging.deploy.parameters]
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = false
+fail_on_empty_changeset = false
+
+[prod]
+[prod.global.parameters]
+stack_name = "aurastream-prod"
+s3_bucket = "aurastream-deployments"
+s3_prefix = "aurastream-prod"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=prod ApiKeyRequired=true"
+
+[prod.build.parameters]
+cached = true
+parallel = true
+
+[prod.deploy.parameters]
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = true
+fail_on_empty_changeset = false

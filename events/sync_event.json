@@ -1,0 +1,13 @@
+{
+  "httpMethod": "POST",
+  "path": "/analyze/sync",
+  "body": "{\"text\": \"I love this product! It's amazing!\", \"options\": {\"language_code\": \"en\", \"include_confidence\": true, \"include_pii_detection\": true}}",
+  "headers": {
+    "Content-Type": "application/json",
+    "X-API-Key": "test-api-key"
+  },
+  "requestContext": {
+    "requestId": "test-request-id",
+    "stage": "dev"
+  }
+}
