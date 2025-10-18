@@ -3,7 +3,9 @@
 import json
 import logging
 from typing import Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
+
+from src.utils.json_encoder import json_dumps
 
 from src.models.request_models import JobStatusRequest
 from src.models.response_models import JobStatusResponse, ErrorResponse
@@ -130,7 +132,7 @@ def _create_success_response(data: Dict[str, Any], request_id: str) -> Dict[str,
             'Content-Type': 'application/json',
             'X-Request-ID': request_id
         },
-        'body': json.dumps(data)
+        'body': json_dumps(data)
     }
 
 
@@ -141,7 +143,7 @@ def _create_error_response(status_code: int, error_code: str, message: str, requ
             'code': error_code,
             'message': message,
             'request_id': request_id,
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }
     )
     
@@ -151,5 +153,5 @@ def _create_error_response(status_code: int, error_code: str, message: str, requ
             'Content-Type': 'application/json',
             'X-Request-ID': request_id
         },
-        'body': json.dumps(error_response.model_dump())
+        'body': json_dumps(error_response.model_dump())
     }

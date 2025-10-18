@@ -4,7 +4,11 @@ import json
 import time
 import logging
 from typing import Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
+
+from src.utils.json_encoder import json_dumps
+
+from pydantic import ValidationError
 
 from src.models.request_models import SentimentAnalysisRequest
 from src.models.response_models import SentimentAnalysisResponse, ErrorResponse
@@ -37,7 +41,24 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # Parse request
         request_data = json.loads(event.get('body', '{}'))
         request = SentimentAnalysisRequest(**request_data)
-        
+    except ValidationError as e:
+        logger.warning(f"Validation error for request {request_id}: {str(e)}")
+        return _create_error_response(
+            ERROR_CODES['VALIDATION_ERROR'],
+            'VALIDATION_ERROR',
+            f'Invalid request data: {str(e)}',
+            request_id
+        )
+    except json.JSONDecodeError as e:
+        logger.warning(f"JSON decode error for request {request_id}: {str(e)}")
+        return _create_error_response(
+            ERROR_CODES['VALIDATION_ERROR'],
+            'VALIDATION_ERROR',
+            'Invalid JSON in request body',
+            request_id
+        )
+    
+    try:
         # Validate input security
         security_check = InputValidator.validate_text_security(request.text)
         if not security_check['is_safe']:
@@ -158,6 +179,10 @@ def _get_sentiment_score(sentiment_result: Dict[str, Any]) -> float:
 
 def _create_success_response(data: Dict[str, Any], request_id: str, cache_hit: bool) -> Dict[str, Any]:
     """Create successful API Gateway response."""
+    # Add cache_hit to the response data
+    response_data = data.copy()
+    response_data['cache_hit'] = cache_hit
+    
     return {
         'statusCode': 200,
         'headers': {
@@ -165,7 +190,7 @@ def _create_success_response(data: Dict[str, Any], request_id: str, cache_hit: b
             'X-Request-ID': request_id,
             'X-Cache-Hit': str(cache_hit).lower()
         },
-        'body': json.dumps(data)
+        'body': json_dumps(response_data)
     }
 
 
@@ -176,7 +201,7 @@ def _create_error_response(status_code: int, error_code: str, message: str, requ
             'code': error_code,
             'message': message,
             'request_id': request_id,
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }
     )
     
@@ -186,5 +211,5 @@ def _create_error_response(status_code: int, error_code: str, message: str, requ
             'Content-Type': 'application/json',
             'X-Request-ID': request_id
         },
-        'body': json.dumps(error_response.model_dump())
+        'body': json_dumps(error_response.model_dump())
     }

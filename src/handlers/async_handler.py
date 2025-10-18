@@ -7,6 +7,10 @@ import logging
 from typing import Dict, Any, Optional
 from datetime import datetime, timedelta, timezone
 
+from src.utils.json_encoder import json_dumps
+
+from pydantic import ValidationError
+
 from src.models.request_models import AsyncSentimentAnalysisRequest
 from src.models.response_models import AsyncJobResponse, ErrorResponse
 from src.utils.aws_clients import aws_clients
@@ -36,7 +40,24 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # Parse request
         request_data = json.loads(event.get('body', '{}'))
         request = AsyncSentimentAnalysisRequest(**request_data)
-        
+    except ValidationError as e:
+        logger.warning(f"Validation error for request {request_id}: {str(e)}")
+        return _create_error_response(
+            ERROR_CODES['VALIDATION_ERROR'],
+            'VALIDATION_ERROR',
+            f'Invalid request data: {str(e)}',
+            request_id
+        )
+    except json.JSONDecodeError as e:
+        logger.warning(f"JSON decode error for request {request_id}: {str(e)}")
+        return _create_error_response(
+            ERROR_CODES['VALIDATION_ERROR'],
+            'VALIDATION_ERROR',
+            'Invalid JSON in request body',
+            request_id
+        )
+    
+    try:
         # Validate input security
         security_check = InputValidator.validate_text_security(request.text)
         if not security_check['is_safe']:
@@ -267,7 +288,7 @@ def _create_success_response(data: Dict[str, Any], request_id: str) -> Dict[str,
             'Content-Type': 'application/json',
             'X-Request-ID': request_id
         },
-        'body': json.dumps(data)
+        'body': json_dumps(data)
     }
 
 
@@ -288,5 +309,5 @@ def _create_error_response(status_code: int, error_code: str, message: str, requ
             'Content-Type': 'application/json',
             'X-Request-ID': request_id
         },
-        'body': json.dumps(error_response.model_dump())
+        'body': json_dumps(error_response.model_dump())
     }

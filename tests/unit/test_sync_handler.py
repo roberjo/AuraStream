@@ -82,6 +82,10 @@ class TestSyncHandler:
     
     def test_pii_detection(self, api_event, lambda_context, mock_comprehend_response):
         """Test PII detection functionality."""
+        # Modify the event to include PII detection option
+        pii_event = api_event.copy()
+        pii_event['body'] = '{"text": "I love this product!", "options": {"include_pii_detection": true}}'
+        
         with patch('src.handlers.sync_handler._analyze_sentiment') as mock_analyze:
             mock_analyze.return_value = mock_comprehend_response
             
@@ -92,7 +96,7 @@ class TestSyncHandler:
                 with patch('src.handlers.sync_handler.PIIDetector') as mock_pii:
                     mock_pii.return_value.detect_pii.return_value = {'pii_detected': True}
                     
-                    response = lambda_handler(api_event, lambda_context)
+                    response = lambda_handler(pii_event, lambda_context)
                     
                     assert response['statusCode'] == 200
                     body = json.loads(response['body'])
@@ -139,10 +143,10 @@ class TestSyncHandler:
         comprehend_response = {
             'Sentiment': sentiment,
             'SentimentScore': {
-                'POSITIVE': 0.95,
-                'NEGATIVE': 0.02,
-                'NEUTRAL': 0.02,
-                'MIXED': 0.01
+                'Positive': 0.95,
+                'Negative': 0.02,
+                'Neutral': 0.02,
+                'Mixed': 0.01
             }
         }
         

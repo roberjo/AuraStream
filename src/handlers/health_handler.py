@@ -5,6 +5,8 @@ import logging
 from typing import Dict, Any
 from datetime import datetime
 
+from src.utils.json_encoder import json_dumps
+
 from src.models.response_models import HealthResponse
 from src.utils.aws_clients import aws_clients
 
@@ -47,7 +49,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'headers': {
                 'Content-Type': 'application/json'
             },
-            'body': json.dumps(health_response.model_dump())
+            'body': json_dumps(health_response.model_dump())
         }
         
     except Exception as e:

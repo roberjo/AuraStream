@@ -79,7 +79,7 @@ class TestAsyncHandler:
         assert response['statusCode'] == 400
         body = json.loads(response['body'])
         assert body['error']['code'] == 'VALIDATION_ERROR'
-        assert 'exceeds maximum length' in body['error']['message']
+        assert 'String should have at most 1048576 characters' in body['error']['message']
     
     def test_security_validation(self, lambda_context):
         """Test security validation for malicious input."""
@@ -183,9 +183,9 @@ class TestAsyncHandler:
         
         response = lambda_handler(async_event, lambda_context)
         
-        assert response['statusCode'] == 500
+        assert response['statusCode'] == 400
         body = json.loads(response['body'])
-        assert body['error']['code'] == 'INTERNAL_ERROR'
+        assert body['error']['code'] == 'VALIDATION_ERROR'
     
     def test_estimated_completion_calculation(self):
         """Test estimated completion time calculation."""
