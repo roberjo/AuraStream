@@ -54,7 +54,7 @@ API Gateway → Lambda → [Cache Check] → Comprehend → Response
 Async Path: S3 → Step Functions → Batch Processing → DynamoDB
 ```
 
-**Tech Stack**: AWS Lambda, API Gateway, DynamoDB, S3, Step Functions, Amazon Comprehend, CloudWatch, X-Ray
+**Tech Stack**: AWS Lambda, API Gateway, DynamoDB, S3, Step Functions, Amazon Comprehend, CloudWatch, X-Ray, Terraform Cloud
 
 ## 🛠️ Quick Start
 
@@ -71,7 +71,7 @@ make setup
 # Run tests
 make test
 
-# Deploy to development
+# Deploy to development via Terraform Cloud
 make deploy-dev
 ```
 
@@ -118,6 +118,7 @@ aurastream analyze "I love this product!" --sync
 - [**LLM Guide & Implementation Plan**](docs/AuraStream_LLM_Guide_and_Implementation_Plan.md) - AI-friendly project overview and implementation roadmap
 - [**Business Analysis**](docs/AuraStream_Business_Analysis.md) - Market analysis, financial projections, and business strategy
 - [**Monitoring & Observability**](docs/AuraStream_Monitoring_Observability_Guide.md) - Comprehensive monitoring and observability setup
+- [**Terraform Cloud Deployment Guide**](docs/AuraStream_Terraform_Cloud_Deployment_Guide.md) - Complete Terraform Cloud setup and deployment guide
 
 ## 💼 Business Value
 
@@ -150,7 +151,7 @@ aurastream analyze "I love this product!" --sync
 4. **Deploy**: `make deploy-dev` to deploy to AWS development environment
 
 ### **For Production**
-1. **Deploy Infrastructure**: Use AWS SAM templates with `make deploy-prod`
+1. **Deploy Infrastructure**: Use Terraform Cloud with `make deploy-prod`
 2. **Configure API Keys**: Set up authentication and rate limiting
 3. **Integrate SDK**: Use Python, JavaScript, or cURL examples
 4. **Monitor Performance**: Set up CloudWatch dashboards and alerts

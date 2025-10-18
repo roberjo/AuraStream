@@ -45,17 +45,20 @@ security: ## Run security checks
 build: ## Build the application
 	sam build
 
-deploy-dev: ## Deploy to development
-	sam build
-	sam deploy --config-env dev --no-confirm-changeset
+deploy-dev: ## Deploy to development via Terraform Cloud
+	cd terraform && terraform workspace select aurastream-dev
+	cd terraform && terraform plan -var-file="workspaces/dev.tfvars"
+	cd terraform && terraform apply -var-file="workspaces/dev.tfvars" -auto-approve
 
-deploy-staging: ## Deploy to staging
-	sam build
-	sam deploy --config-env staging --no-confirm-changeset
+deploy-staging: ## Deploy to staging via Terraform Cloud
+	cd terraform && terraform workspace select aurastream-staging
+	cd terraform && terraform plan -var-file="workspaces/staging.tfvars"
+	cd terraform && terraform apply -var-file="workspaces/staging.tfvars" -auto-approve
 
-deploy-prod: ## Deploy to production
-	sam build
-	sam deploy --config-env prod --confirm-changeset
+deploy-prod: ## Deploy to production via Terraform Cloud
+	cd terraform && terraform workspace select aurastream-prod
+	cd terraform && terraform plan -var-file="workspaces/prod.tfvars"
+	cd terraform && terraform apply -var-file="workspaces/prod.tfvars" -auto-approve
 
 local: ## Run locally
 	sam local start-api --port 3000
@@ -82,8 +85,17 @@ update-deps: ## Update dependencies
 	. venv/bin/activate && pip-compile requirements.in
 	. venv/bin/activate && pip-compile requirements-dev.in
 
-validate: ## Validate CloudFormation template
-	sam validate
+validate: ## Validate Terraform configuration
+	cd terraform && terraform validate
 
-package: ## Package the application
-	sam package --template-file template.yaml --s3-bucket aurastream-deployments --output-template-file packaged-template.yaml
+terraform-init: ## Initialize Terraform
+	cd terraform && terraform init
+
+terraform-plan: ## Plan Terraform deployment
+	cd terraform && terraform plan -var-file="workspaces/dev.tfvars"
+
+terraform-fmt: ## Format Terraform files
+	cd terraform && terraform fmt -recursive
+
+terraform-workspace: ## List Terraform workspaces
+	cd terraform && terraform workspace list
