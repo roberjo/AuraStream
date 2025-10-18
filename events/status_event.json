@@ -1,0 +1,15 @@
+{
+  "httpMethod": "GET",
+  "path": "/status/123e4567-e89b-12d3-a456-426614174000",
+  "pathParameters": {
+    "job_id": "123e4567-e89b-12d3-a456-426614174000"
+  },
+  "headers": {
+    "Content-Type": "application/json",
+    "X-API-Key": "test-api-key"
+  },
+  "requestContext": {
+    "requestId": "test-request-id",
+    "stage": "dev"
+  }
+}
