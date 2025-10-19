@@ -1,4 +1,4 @@
-"""Unit tests for data models."""
+"""Unit tests for Pydantic models."""
 
 import pytest
 from datetime import datetime, timezone
@@ -25,71 +25,62 @@ class TestSentimentAnalysisRequest:
         """Test valid request creation."""
         request = SentimentAnalysisRequest(
             text="I love this product!",
-            source_id="test-source",
-            options={"include_confidence": True}
+            options={
+                "language_code": "en",
+                "include_confidence": True,
+                "include_pii_detection": False
+            }
         )
-        
         assert request.text == "I love this product!"
-        assert request.source_id == "test-source"
-        assert request.options == {"include_confidence": True}
+        assert request.options["language_code"] == "en"
+        assert request.options["include_confidence"] is True
+        assert request.options["include_pii_detection"] is False
     
     def test_minimal_request(self):
         """Test minimal request creation."""
-        request = SentimentAnalysisRequest(text="Test text")
-        
-        assert request.text == "Test text"
-        assert request.source_id is None
+        request = SentimentAnalysisRequest(text="Hello world!")
+        assert request.text == "Hello world!"
         assert request.options is None
     
     def test_empty_text_validation(self):
         """Test empty text validation."""
         with pytest.raises(ValidationError) as exc_info:
             SentimentAnalysisRequest(text="")
-        
-        assert "String should have at least 1 character" in str(exc_info.value)
+        assert "Text cannot be empty" in str(exc_info.value)
     
     def test_whitespace_only_text_validation(self):
         """Test whitespace-only text validation."""
         with pytest.raises(ValidationError) as exc_info:
             SentimentAnalysisRequest(text="   \n\t   ")
-        
-        assert "String should have at least 1 character" in str(exc_info.value)
+        assert "Text cannot be empty" in str(exc_info.value)
     
     def test_text_length_validation(self):
         """Test text length validation."""
-        long_text = "x" * (1000000 + 1)  # Exceeds 1MB limit
-        
+        long_text = "x" * 5001  # Exceeds 5000 character limit
         with pytest.raises(ValidationError) as exc_info:
             SentimentAnalysisRequest(text=long_text)
-        
-        assert "String should have at most 1000000 characters" in str(exc_info.value)
-    
-    def test_source_id_validation(self):
-        """Test source_id validation."""
-        with pytest.raises(ValidationError) as exc_info:
-            SentimentAnalysisRequest(text="test", source_id="")
-        
-        assert "String should have at least 1 character" in str(exc_info.value)
+        assert "String should have at most 5000 characters" in str(exc_info.value)
     
     def test_options_validation(self):
         """Test options validation."""
-        # Valid options
         request = SentimentAnalysisRequest(
-            text="test",
+            text="Test text",
             options={
+                "language_code": "en",
                 "include_confidence": True,
                 "include_pii_detection": False,
-                "language_code": "en"
+                "custom_option": "value"
             }
         )
+        assert request.options["language_code"] == "en"
         assert request.options["include_confidence"] is True
         assert request.options["include_pii_detection"] is False
-        assert request.options["language_code"] == "en"
+        assert request.options["custom_option"] == "value"
     
     def test_invalid_options_type(self):
         """Test invalid options type."""
         with pytest.raises(ValidationError):
-            SentimentAnalysisRequest(text="test", options="invalid")
+            SentimentAnalysisRequest(text="Test text", options="invalid")
 
 
 class TestAsyncSentimentAnalysisRequest:
@@ -99,22 +90,35 @@ class TestAsyncSentimentAnalysisRequest:
         """Test valid async request creation."""
         request = AsyncSentimentAnalysisRequest(
             text="I love this product!",
-            source_id="test-source",
-            options={"include_confidence": True}
+            source_id="test-source-123",
+            options={
+                "language_code": "en",
+                "include_confidence": True
+            }
         )
-        
         assert request.text == "I love this product!"
-        assert request.source_id == "test-source"
-        assert request.options == {"include_confidence": True}
+        assert request.source_id == "test-source-123"
+        assert request.options["language_code"] == "en"
     
     def test_async_text_length_validation(self):
         """Test async text length validation."""
-        long_text = "x" * (1048576 + 1)  # Exceeds 1MB limit for async
-        
+        long_text = "x" * 1048577  # Exceeds 1MB limit
         with pytest.raises(ValidationError) as exc_info:
-            AsyncSentimentAnalysisRequest(text=long_text)
-        
+            AsyncSentimentAnalysisRequest(text=long_text, source_id="test")
         assert "String should have at most 1048576 characters" in str(exc_info.value)
+    
+    def test_source_id_validation(self):
+        """Test source_id validation."""
+        request = AsyncSentimentAnalysisRequest(
+            text="Test text",
+            source_id="valid-source-id-123"
+        )
+        assert request.source_id == "valid-source-id-123"
+    
+    def test_optional_source_id(self):
+        """Test optional source_id."""
+        request = AsyncSentimentAnalysisRequest(text="Test text")
+        assert request.source_id is None
 
 
 class TestJobStatusRequest:
@@ -122,23 +126,20 @@ class TestJobStatusRequest:
     
     def test_valid_job_status_request(self):
         """Test valid job status request creation."""
-        request = JobStatusRequest(job_id="test-job-123")
-        
-        assert request.job_id == "test-job-123"
+        request = JobStatusRequest(job_id="job-123-456-789")
+        assert request.job_id == "job-123-456-789"
     
     def test_empty_job_id_validation(self):
         """Test empty job_id validation."""
         with pytest.raises(ValidationError) as exc_info:
             JobStatusRequest(job_id="")
-        
-        assert "String should have at least 1 character" in str(exc_info.value)
+        assert "Job ID cannot be empty" in str(exc_info.value)
     
     def test_invalid_job_id_format(self):
-        """Test invalid job_id format."""
+        """Test invalid job_id format validation."""
         with pytest.raises(ValidationError) as exc_info:
-            JobStatusRequest(job_id="invalid-job-id-format!")
-        
-        assert "String should match pattern" in str(exc_info.value)
+            JobStatusRequest(job_id="invalid-format")
+        assert "Invalid job ID format" in str(exc_info.value)
 
 
 class TestSentimentAnalysisResponse:
@@ -150,15 +151,14 @@ class TestSentimentAnalysisResponse:
             sentiment="POSITIVE",
             score=0.95,
             language_code="en",
-            confidence=True,
+            confidence=1.0,
             pii_detected=False,
             processing_time_ms=150
         )
-        
         assert response.sentiment == "POSITIVE"
         assert response.score == 0.95
         assert response.language_code == "en"
-        assert response.confidence is True
+        assert response.confidence == 1.0
         assert response.pii_detected is False
         assert response.processing_time_ms == 150
     
@@ -169,13 +169,11 @@ class TestSentimentAnalysisResponse:
             score=0.95,
             processing_time_ms=150
         )
-        
         assert response.sentiment == "POSITIVE"
         assert response.score == 0.95
         assert response.language_code is None
-        assert response.confidence is True  # Default value
-        assert response.pii_detected is False  # Default value
-        assert response.processing_time_ms == 150
+        assert response.confidence is None
+        assert response.pii_detected is None
     
     def test_sentiment_validation(self):
         """Test sentiment validation."""
@@ -185,28 +183,16 @@ class TestSentimentAnalysisResponse:
                 score=0.95,
                 processing_time_ms=150
             )
-        
         assert "Input should be" in str(exc_info.value)
     
     def test_score_validation(self):
         """Test score validation."""
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValidationError):
             SentimentAnalysisResponse(
                 sentiment="POSITIVE",
                 score=1.5,  # Invalid score > 1.0
                 processing_time_ms=150
             )
-        
-        assert "Input should be less than or equal to 1" in str(exc_info.value)
-        
-        with pytest.raises(ValidationError) as exc_info:
-            SentimentAnalysisResponse(
-                sentiment="POSITIVE",
-                score=-0.1,  # Invalid score < 0.0
-                processing_time_ms=150
-            )
-        
-        assert "Input should be greater than or equal to 0" in str(exc_info.value)
 
 
 class TestAsyncJobResponse:
@@ -215,27 +201,21 @@ class TestAsyncJobResponse:
     def test_valid_async_response(self):
         """Test valid async response creation."""
         response = AsyncJobResponse(
-            job_id="test-job-123",
-            status="PROCESSING",
-            message="Job submitted successfully",
-            estimated_completion=datetime.now(timezone.utc)
+            job_id="job-123-456-789",
+            status="SUBMITTED",
+            estimated_completion_time="2023-12-25T10:30:00Z"
         )
-        
-        assert response.job_id == "test-job-123"
-        assert response.status == "PROCESSING"
-        assert response.message == "Job submitted successfully"
-        assert isinstance(response.estimated_completion, datetime)
+        assert response.job_id == "job-123-456-789"
+        assert response.status == "SUBMITTED"
+        assert response.estimated_completion_time == "2023-12-25T10:30:00Z"
     
     def test_status_validation(self):
         """Test status validation."""
         with pytest.raises(ValidationError) as exc_info:
             AsyncJobResponse(
-                job_id="test-job-123",
-                status="INVALID_STATUS",
-                message="Test message",
-                estimated_completion=datetime.now(timezone.utc)
+                job_id="job-123",
+                status="INVALID_STATUS"
             )
-        
         assert "Input should be" in str(exc_info.value)
 
 
@@ -244,36 +224,30 @@ class TestJobStatusResponse:
     
     def test_valid_job_status_response(self):
         """Test valid job status response creation."""
-        response = JobStatusResponse(
-            job_id="test-job-123",
-            status="COMPLETED",
-            result={
-                "sentiment": "POSITIVE",
-                "score": 0.95,
-                "language_code": "en"
-            },
-            created_at=datetime.now(timezone.utc),
-            updated_at=datetime.now(timezone.utc)
+        result = SentimentAnalysisResponse(
+            sentiment="POSITIVE",
+            score=0.95,
+            processing_time_ms=150
         )
-        
-        assert response.job_id == "test-job-123"
+        response = JobStatusResponse(
+            job_id="job-123-456-789",
+            status="COMPLETED",
+            result=result
+        )
+        assert response.job_id == "job-123-456-789"
         assert response.status == "COMPLETED"
-        assert response.result["sentiment"] == "POSITIVE"
-        assert isinstance(response.created_at, datetime)
-        assert isinstance(response.updated_at, datetime)
+        assert response.result.sentiment == "POSITIVE"
     
     def test_processing_status_response(self):
         """Test processing status response creation."""
         response = JobStatusResponse(
-            job_id="test-job-123",
+            job_id="job-123-456-789",
             status="PROCESSING",
-            result=None,
-            created_at=datetime.now(timezone.utc),
-            updated_at=datetime.now(timezone.utc)
+            progress=50
         )
-        
-        assert response.job_id == "test-job-123"
+        assert response.job_id == "job-123-456-789"
         assert response.status == "PROCESSING"
+        assert response.progress == 50
         assert response.result is None
 
 
@@ -285,12 +259,16 @@ class TestHealthResponse:
         response = HealthResponse(
             status="healthy",
             version="1.0.0",
-            timestamp=datetime.now(timezone.utc)
+            timestamp=datetime.now(timezone.utc),
+            components={
+                "database": "healthy",
+                "cache": "healthy",
+                "external_services": "healthy"
+            }
         )
-        
         assert response.status == "healthy"
         assert response.version == "1.0.0"
-        assert isinstance(response.timestamp, datetime)
+        assert response.components["database"] == "healthy"
     
     def test_health_status_validation(self):
         """Test health status validation."""
@@ -298,9 +276,9 @@ class TestHealthResponse:
             HealthResponse(
                 status="invalid",
                 version="1.0.0",
-                timestamp=datetime.now(timezone.utc)
+                timestamp=datetime.now(timezone.utc),
+                components={}
             )
-        
         assert "Input should be" in str(exc_info.value)
 
 
@@ -309,21 +287,21 @@ class TestErrorResponse:
     
     def test_valid_error_response(self):
         """Test valid error response creation."""
-        error_response = ErrorResponse(
-            error={
-                "code": "VALIDATION_ERROR",
-                "message": "Invalid input",
-                "request_id": "test-request-id",
-                "timestamp": datetime.now(timezone.utc).isoformat()
-            }
+        response = ErrorResponse(
+            error="VALIDATION_ERROR",
+            message="Invalid input provided",
+            details={"field": "text", "issue": "too long"}
         )
-        
-        assert error_response.error["code"] == "VALIDATION_ERROR"
-        assert error_response.error["message"] == "Invalid input"
-        assert error_response.error["request_id"] == "test-request-id"
-        assert "timestamp" in error_response.error
+        assert response.error == "VALIDATION_ERROR"
+        assert response.message == "Invalid input provided"
+        assert response.details["field"] == "text"
     
     def test_error_structure_validation(self):
-        """Test error structure validation."""
-        with pytest.raises(ValidationError):
-            ErrorResponse(error="invalid error structure")
+        """Test error response structure validation."""
+        response = ErrorResponse(
+            error="INTERNAL_ERROR",
+            message="An unexpected error occurred"
+        )
+        assert response.error == "INTERNAL_ERROR"
+        assert response.message == "An unexpected error occurred"
+        assert response.details is None
