@@ -25,7 +25,8 @@ pre-commit>=3.6.0,<4.0.0
 
 # Security scanning
 pip-audit>=2.7.0,<3.0.0
-safety>=3.0.0,<4.0.0
+bandit>=1.7.0,<2.0.0
+# safety>=3.0.0,<4.0.0  # Temporarily disabled due to pydantic 2.x incompatibility
 
 # Documentation
 sphinx>=7.2.0,<8.0.0
