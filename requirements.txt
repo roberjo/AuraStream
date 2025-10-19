@@ -1,28 +1,30 @@
 # AuraStream Production Dependencies
 # Core AWS SDK
+aiohttp==3.9.1
+aiosignal==1.4.0
+annotated-types==0.7.0
+async-timeout==4.0.3
+attrs==25.4.0
+awslambdaric==2.0.4
 boto3==1.34.34
 botocore==1.34.34
-
-# Data validation and serialization
-pydantic==2.5.3
-
-# HTTP client for async operations
-aiohttp==3.9.1
-
-# Date/time handling
-python-dateutil==2.8.2
-
-# JSON handling
+cffi==2.0.0
+cryptography==41.0.7
+frozenlist==1.8.0
+idna==3.11
+jmespath==1.0.1
+multidict==6.7.0
 orjson==3.10.3
-
-# Environment variable management
+propcache==0.4.1
+pycparser==2.23
+pydantic==2.5.3
+pydantic-core==2.14.6
+python-dateutil==2.8.2
 python-dotenv==1.0.0
-
-# Logging
+s3transfer==0.10.4
+simplejson==3.17.2
+six==1.17.0
 structlog==23.2.0
-
-# Security
-cryptography==41.0.5
-
-# AWS Lambda runtime
-awslambdaric==2.0.4
+typing-extensions==4.15.0
+urllib3==1.26.20
+yarl==1.22.0
