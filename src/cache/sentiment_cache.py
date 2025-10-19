@@ -1,11 +1,10 @@
 """Sentiment analysis result caching service."""
 
 import hashlib
-import json
 import logging
 import os
-from typing import Optional, Dict, Any
 from datetime import datetime, timedelta
+from typing import Any, Dict, Optional
 
 from src.utils.aws_clients import aws_clients
 from src.utils.constants import CACHE_TTL_DEFAULT
@@ -18,7 +17,9 @@ class SentimentCache:
     
     def __init__(self):
         """Initialize sentiment cache."""
-        self.table_name = os.environ.get('SENTIMENT_CACHE_TABLE', 'AuraStream-SentimentCache')
+        self.table_name = os.environ.get(
+            'SENTIMENT_CACHE_TABLE', 'AuraStream-SentimentCache'
+        )
         self.dynamodb = aws_clients.get_dynamodb_resource()
         self.table = self.dynamodb.Table(self.table_name)
     
@@ -57,7 +58,9 @@ class SentimentCache:
             logger.error(f"Error getting cached result: {str(e)}")
             return None
     
-    def store_result(self, text: str, result: Dict[str, Any], ttl: Optional[int] = None) -> bool:
+    def store_result(
+        self, text: str, result: Dict[str, Any], ttl: Optional[int] = None
+    ) -> bool:
         """
         Store sentiment analysis result in cache.
         
@@ -77,7 +80,9 @@ class SentimentCache:
                 'text_hash': cache_key,
                 'sentiment_result': result,
                 'created_at': datetime.utcnow().isoformat(),
-                'ttl': int((datetime.utcnow() + timedelta(seconds=ttl_seconds)).timestamp())
+                'ttl': int(
+                    (datetime.utcnow() + timedelta(seconds=ttl_seconds)).timestamp()
+                )
             }
             
             self.table.put_item(Item=item)

@@ -2,10 +2,10 @@
 
 import logging
 import os
-from typing import Dict, Any, Optional
-from datetime import datetime
+from typing import Dict, Optional
 
 import boto3
+
 from src.utils.constants import METRICS_NAMESPACE
 
 logger = logging.getLogger(__name__)
@@ -13,18 +13,20 @@ logger = logging.getLogger(__name__)
 
 class MetricsCollector:
     """Collects and sends custom metrics to CloudWatch."""
-    
+
     def __init__(self):
         """Initialize metrics collector."""
         region = os.environ.get('AWS_REGION', 'us-east-1')
         self.cloudwatch = boto3.client('cloudwatch', region_name=region)
         self.namespace = METRICS_NAMESPACE
         self.environment = os.environ.get('ENVIRONMENT', 'dev')
-    
-    def record_sentiment_analysis(self, sentiment: str, confidence: float, processing_time: int):
+
+    def record_sentiment_analysis(
+        self, sentiment: str, confidence: float, processing_time: int
+    ):
         """
         Record sentiment analysis metrics.
-        
+
         Args:
             sentiment: Sentiment result
             confidence: Confidence score
@@ -60,17 +62,17 @@ class MetricsCollector:
                     ]
                 }
             ]
-            
+
             self.cloudwatch.put_metric_data(
                 Namespace=self.namespace,
                 MetricData=metrics
             )
-            
+
             logger.debug(f"Recorded sentiment analysis metrics for {sentiment}")
-            
+
         except Exception as e:
             logger.error(f"Error recording sentiment analysis metrics: {str(e)}")
-    
+
     def record_cache_hit(self):
         """Record cache hit metric."""
         try:
@@ -87,12 +89,12 @@ class MetricsCollector:
                     }
                 ]
             )
-            
+
             logger.debug("Recorded cache hit metric")
-            
+
         except Exception as e:
             logger.error(f"Error recording cache hit metric: {str(e)}")
-    
+
     def record_cache_miss(self):
         """Record cache miss metric."""
         try:
@@ -109,12 +111,12 @@ class MetricsCollector:
                     }
                 ]
             )
-            
+
             logger.debug("Recorded cache miss metric")
-            
+
         except Exception as e:
             logger.error(f"Error recording cache miss metric: {str(e)}")
-    
+
     def record_pii_detection(self):
         """Record PII detection metric."""
         try:
@@ -131,16 +133,16 @@ class MetricsCollector:
                     }
                 ]
             )
-            
+
             logger.debug("Recorded PII detection metric")
-            
+
         except Exception as e:
             logger.error(f"Error recording PII detection metric: {str(e)}")
-    
+
     def record_error(self, error_type: str = 'general'):
         """
         Record error metric.
-        
+
         Args:
             error_type: Type of error
         """
@@ -159,16 +161,18 @@ class MetricsCollector:
                     }
                 ]
             )
-            
+
             logger.debug(f"Recorded error metric for {error_type}")
-            
+
         except Exception as e:
             logger.error(f"Error recording error metric: {str(e)}")
-    
-    def record_api_usage(self, endpoint: str, customer_id: str, response_time: int, status_code: int):
+
+    def record_api_usage(
+        self, endpoint: str, customer_id: str, response_time: int, status_code: int
+    ):
         """
         Record API usage metrics.
-        
+
         Args:
             endpoint: API endpoint
             customer_id: Customer identifier
@@ -199,22 +203,27 @@ class MetricsCollector:
                     ]
                 }
             ]
-            
+
             self.cloudwatch.put_metric_data(
                 Namespace=self.namespace,
                 MetricData=metrics
             )
-            
+
             logger.debug(f"Recorded API usage metrics for {endpoint}")
-            
+
         except Exception as e:
             logger.error(f"Error recording API usage metrics: {str(e)}")
-    
-    def record_business_metric(self, metric_name: str, value: float, unit: str = 'Count', 
-                             dimensions: Optional[Dict[str, str]] = None):
+
+    def record_business_metric(
+        self,
+        metric_name: str,
+        value: float,
+        unit: str = 'Count',
+        dimensions: Optional[Dict[str, str]] = None,
+    ):
         """
         Record custom business metric.
-        
+
         Args:
             metric_name: Name of the metric
             value: Metric value
@@ -225,11 +234,11 @@ class MetricsCollector:
             metric_dimensions = [
                 {'Name': 'Environment', 'Value': self.environment}
             ]
-            
+
             if dimensions:
                 for key, value in dimensions.items():
                     metric_dimensions.append({'Name': key, 'Value': value})
-            
+
             self.cloudwatch.put_metric_data(
                 Namespace=self.namespace,
                 MetricData=[
@@ -241,8 +250,8 @@ class MetricsCollector:
                     }
                 ]
             )
-            
+
             logger.debug(f"Recorded business metric: {metric_name}")
-            
+
         except Exception as e:
             logger.error(f"Error recording business metric {metric_name}: {str(e)}")
