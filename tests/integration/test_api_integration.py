@@ -17,62 +17,62 @@ class TestAPIIntegration:
     """Integration tests for API endpoints."""
 
     @pytest.fixture
+    @mock_aws
     def mock_aws_services(self):
         """Mock AWS services for integration testing."""
-        with mock_aws(["dynamodb", "s3", "stepfunctions"]):
-            # Set up DynamoDB tables
-            dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
+        # Set up DynamoDB tables
+        dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
 
-            # Create sentiment cache table
-            cache_table = dynamodb.create_table(
-                TableName="test-sentiment-cache",
-                KeySchema=[{"AttributeName": "text_hash", "KeyType": "HASH"}],
-                AttributeDefinitions=[
-                    {"AttributeName": "text_hash", "AttributeType": "S"}
-                ],
-                BillingMode="PAY_PER_REQUEST",
-            )
+        # Create sentiment cache table
+        cache_table = dynamodb.create_table(
+            TableName="test-sentiment-cache",
+            KeySchema=[{"AttributeName": "text_hash", "KeyType": "HASH"}],
+            AttributeDefinitions=[
+                {"AttributeName": "text_hash", "AttributeType": "S"}
+            ],
+            BillingMode="PAY_PER_REQUEST",
+        )
 
-            # Create job results table
-            job_table = dynamodb.create_table(
-                TableName="test-job-results",
-                KeySchema=[{"AttributeName": "job_id", "KeyType": "HASH"}],
-                AttributeDefinitions=[
-                    {"AttributeName": "job_id", "AttributeType": "S"}
-                ],
-                BillingMode="PAY_PER_REQUEST",
-            )
+        # Create job results table
+        job_table = dynamodb.create_table(
+            TableName="test-job-results",
+            KeySchema=[{"AttributeName": "job_id", "KeyType": "HASH"}],
+            AttributeDefinitions=[
+                {"AttributeName": "job_id", "AttributeType": "S"}
+            ],
+            BillingMode="PAY_PER_REQUEST",
+        )
 
-            # Create S3 bucket
-            s3 = boto3.client("s3", region_name="us-east-1")
-            s3.create_bucket(Bucket="test-aurastream-documents")
+        # Create S3 bucket
+        s3 = boto3.client("s3", region_name="us-east-1")
+        s3.create_bucket(Bucket="test-aurastream-documents")
 
-            # Create Step Functions state machine
-            stepfunctions = boto3.client("stepfunctions", region_name="us-east-1")
-            stepfunctions.create_state_machine(
-                name="test-sentiment-analysis",
-                definition=json.dumps(
-                    {
-                        "Comment": "Test state machine",
-                        "StartAt": "ProcessDocument",
-                        "States": {
-                            "ProcessDocument": {
-                                "Type": "Pass",
-                                "Result": "Success",
-                                "End": True,
-                            }
-                        },
-                    }
-                ),
-                roleArn="arn:aws:iam::123456789012:role/TestRole",
-            )
+        # Create Step Functions state machine
+        stepfunctions = boto3.client("stepfunctions", region_name="us-east-1")
+        stepfunctions.create_state_machine(
+            name="test-sentiment-analysis",
+            definition=json.dumps(
+                {
+                    "Comment": "Test state machine",
+                    "StartAt": "ProcessDocument",
+                    "States": {
+                        "ProcessDocument": {
+                            "Type": "Pass",
+                            "Result": "Success",
+                            "End": True,
+                        }
+                    },
+                }
+            ),
+            roleArn="arn:aws:iam::123456789012:role/TestRole",
+        )
 
-            yield {
-                "cache_table": cache_table,
-                "job_table": job_table,
-                "s3": s3,
-                "stepfunctions": stepfunctions,
-            }
+        yield {
+            "cache_table": cache_table,
+            "job_table": job_table,
+            "s3": s3,
+            "stepfunctions": stepfunctions,
+        }
 
     @pytest.fixture
     def sync_event(self):
@@ -256,20 +256,43 @@ class TestAPIIntegration:
         assert body["error"]["code"] == "NOT_FOUND"
         assert "Job not found" in body["error"]["message"]
 
+    @mock_aws
     def test_health_endpoint_integration(
-        self, mock_aws_services, health_event, lambda_context
+        self, health_event, lambda_context
     ):
         """Test health endpoint integration."""
-        # Call health handler
-        response = health_handler(health_event, lambda_context)
+        # Set up mocked AWS services
+        dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
+        cache_table = dynamodb.create_table(
+            TableName="test-sentiment-cache",
+            KeySchema=[{"AttributeName": "text_hash", "KeyType": "HASH"}],
+            AttributeDefinitions=[
+                {"AttributeName": "text_hash", "AttributeType": "S"}
+            ],
+            BillingMode="PAY_PER_REQUEST",
+        )
+        
+        s3 = boto3.client("s3", region_name="us-east-1")
+        s3.create_bucket(Bucket="test-aurastream-documents")
+        
+        comprehend = boto3.client("comprehend", region_name="us-east-1")
+        
+        # Patch the aws_clients to use mocked services
+        with patch("src.handlers.health_handler.aws_clients") as mock_clients:
+            mock_clients.get_dynamodb_resource.return_value = dynamodb
+            mock_clients.get_s3_client.return_value = s3
+            mock_clients.get_comprehend_client.return_value = comprehend
+            
+            # Call health handler
+            response = health_handler(health_event, lambda_context)
 
-        # Verify response
-        assert response["statusCode"] == 200
-        body = json.loads(response["body"])
-        assert body["status"] == "healthy"
-        assert body["version"] == "1.0.0"
-        assert "components" in body
-        assert "timestamp" in body
+            # Verify response
+            assert response["statusCode"] == 200
+            body = json.loads(response["body"])
+            assert body["status"] == "healthy"
+            assert body["version"] == "1.0.0"
+            assert "components" in body
+            assert "timestamp" in body
 
     def test_sync_endpoint_validation_error(self, mock_aws_services, lambda_context):
         """Test sync endpoint with validation error."""

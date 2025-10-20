@@ -13,33 +13,33 @@ class TestAWSServicesIntegration:
     """Integration tests for AWS services."""
 
     @pytest.fixture
+    @mock_aws
     def mock_aws_services(self):
         """Mock AWS services for integration testing."""
-        with mock_aws(["dynamodb", "s3", "comprehend"]):
-            # Set up DynamoDB
-            dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
-            table = dynamodb.create_table(
-                TableName="test-sentiment-cache",
-                KeySchema=[{"AttributeName": "text_hash", "KeyType": "HASH"}],
-                AttributeDefinitions=[
-                    {"AttributeName": "text_hash", "AttributeType": "S"}
-                ],
-                BillingMode="PAY_PER_REQUEST",
-            )
+        # Set up DynamoDB
+        dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
+        table = dynamodb.create_table(
+            TableName="test-sentiment-cache",
+            KeySchema=[{"AttributeName": "text_hash", "KeyType": "HASH"}],
+            AttributeDefinitions=[
+                {"AttributeName": "text_hash", "AttributeType": "S"}
+            ],
+            BillingMode="PAY_PER_REQUEST",
+        )
 
-            # Set up S3
-            s3 = boto3.client("s3", region_name="us-east-1")
-            s3.create_bucket(Bucket="test-aurastream-documents")
+        # Set up S3
+        s3 = boto3.client("s3", region_name="us-east-1")
+        s3.create_bucket(Bucket="test-aurastream-documents")
 
-            # Set up Comprehend
-            comprehend = boto3.client("comprehend", region_name="us-east-1")
+        # Set up Comprehend
+        comprehend = boto3.client("comprehend", region_name="us-east-1")
 
-            yield {
-                "dynamodb": dynamodb,
-                "table": table,
-                "s3": s3,
-                "comprehend": comprehend,
-            }
+        yield {
+            "dynamodb": dynamodb,
+            "table": table,
+            "s3": s3,
+            "comprehend": comprehend,
+        }
 
     def test_sentiment_cache_integration(self, mock_aws_services):
         """Test sentiment cache integration with DynamoDB."""

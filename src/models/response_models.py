@@ -3,7 +3,7 @@
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional, Union
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class SentimentAnalysisResponse(BaseModel):
@@ -24,7 +24,7 @@ class SentimentAnalysisResponse(BaseModel):
     )
     request_id: Optional[str] = Field(None, description="Unique request identifier")
 
-    @validator("sentiment")
+    @field_validator("sentiment")
     @classmethod
     def validate_sentiment(cls, v: str) -> str:
         """Validate sentiment value."""
@@ -48,7 +48,7 @@ class AsyncJobResponse(BaseModel):
         description="Job creation time",
     )
 
-    @validator("status")
+    @field_validator("status")
     @classmethod
     def validate_status(cls, v: str) -> str:
         """Validate status value."""
@@ -75,7 +75,7 @@ class JobStatusResponse(BaseModel):
     source_id: Optional[str] = Field(None, description="Source identifier")
     progress: Optional[int] = Field(None, description="Job progress percentage")
 
-    @validator("status")
+    @field_validator("status")
     @classmethod
     def validate_status(cls, v: str) -> str:
         """Validate status value."""
@@ -96,7 +96,7 @@ class HealthResponse(BaseModel):
     version: str = Field(..., description="Service version")
     components: Dict[str, str] = Field(..., description="Component status")
 
-    @validator("status")
+    @field_validator("status")
     @classmethod
     def validate_status(cls, v: str) -> str:
         """Validate health status value."""
@@ -113,7 +113,7 @@ class ErrorResponse(BaseModel):
     message: Optional[str] = Field(None, description="Error message")
     details: Optional[Dict[str, Any]] = Field(None, description="Error details")
 
-    @validator("error")
+    @field_validator("error")
     @classmethod
     def validate_error(
         cls, v: Union[str, Dict[str, Any]]
