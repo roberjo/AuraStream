@@ -1,8 +1,9 @@
 """AWS service clients configuration."""
 
+from typing import Any, Dict
+
 import boto3
 from botocore.config import Config
-from typing import Any, Dict
 
 
 class AWSClientManager:
