@@ -33,9 +33,7 @@ class SentimentAnalysisRequest(BaseModel):
 class AsyncSentimentAnalysisRequest(BaseModel):
     """Request model for asynchronous sentiment analysis."""
 
-    text: str = Field(
-        ..., max_length=1048576, description="Text to analyze (max 1MB)"
-    )
+    text: str = Field(..., max_length=1048576, description="Text to analyze (max 1MB)")
     source_id: Optional[str] = Field(
         default=None, description="Custom identifier for tracking"
     )
