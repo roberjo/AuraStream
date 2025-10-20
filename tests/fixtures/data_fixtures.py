@@ -1,6 +1,5 @@
 """Data fixtures for testing."""
 
-
 import pytest
 
 
@@ -153,8 +152,7 @@ def sample_step_function_data():
             "aurastream-processor:test-execution-123"
         ),
         "state_machine_arn": (
-            "arn:aws:states:us-east-1:123456789012:stateMachine:"
-            "aurastream-processor"
+            "arn:aws:states:us-east-1:123456789012:stateMachine:" "aurastream-processor"
         ),
         "input": {
             "job_id": "test-job-123",

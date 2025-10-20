@@ -169,7 +169,7 @@ class SentimentCache:
 
         Args:
             text: Text to generate key for
-    
+
         Returns:
             Cache key
         """
