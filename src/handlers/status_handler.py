@@ -157,6 +157,7 @@ def _create_error_response(
             "request_id": request_id,
             "timestamp": datetime.now(timezone.utc).isoformat(),
         },
+        message=None,
         details={"request_id": request_id},
     )
 
