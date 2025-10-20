@@ -59,15 +59,24 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             )
 
         # Create response
+        # Handle datetime parsing with 'Z' suffix
+        created_at_str = job_data["created_at"]
+        if created_at_str.endswith('Z'):
+            created_at_str = created_at_str[:-1] + '+00:00'
+        created_at = datetime.fromisoformat(created_at_str)
+        
+        completed_at = None
+        if job_data.get("completed_at"):
+            completed_at_str = job_data["completed_at"]
+            if completed_at_str.endswith('Z'):
+                completed_at_str = completed_at_str[:-1] + '+00:00'
+            completed_at = datetime.fromisoformat(completed_at_str)
+        
         response = JobStatusResponse(
             job_id=job_id,
             status=job_data["status"],
-            created_at=datetime.fromisoformat(job_data["created_at"]),
-            completed_at=(
-                datetime.fromisoformat(job_data["completed_at"])
-                if job_data.get("completed_at")
-                else None
-            ),
+            created_at=created_at,
+            completed_at=completed_at,
             result=job_data.get("result"),
             error=job_data.get("error"),
             source_id=job_data.get("source_id"),
@@ -144,10 +153,10 @@ def _create_error_response(
     error_response = ErrorResponse(
         error={
             "code": error_code,
+            "message": message,
             "request_id": request_id,
             "timestamp": datetime.now(timezone.utc).isoformat(),
         },
-        message=message,
         details={"request_id": request_id},
     )
 

@@ -207,10 +207,10 @@ def _create_error_response(
     error_response = ErrorResponse(
         error={
             "code": error_code,
+            "message": message,
             "request_id": request_id,
             "timestamp": datetime.now(timezone.utc).isoformat(),
         },
-        message=message,
         details={"request_id": request_id},
     )
 
