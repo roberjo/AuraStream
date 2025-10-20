@@ -5,10 +5,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.handlers.update_job_status_handler import (
-    _update_job_status,
-    lambda_handler,
-)
+from src.handlers.update_job_status_handler import _update_job_status, lambda_handler
 
 
 class TestUpdateJobStatusHandler:
