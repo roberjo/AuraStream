@@ -1,21 +1,9 @@
 """Response data models for AuraStream API."""
 
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional, TypeVar, Union
+from typing import Any, Dict, Optional, Union
 
-from pydantic import BaseModel, Field
-
-try:
-    from pydantic import field_validator  # type: ignore
-
-    PYDANTIC_V2 = True
-except ImportError:
-    from pydantic import validator as field_validator
-
-    PYDANTIC_V2 = False
-
-# Type variable for model classes
-T = TypeVar("T")
+from pydantic import BaseModel, Field, validator
 
 
 class SentimentAnalysisResponse(BaseModel):
@@ -36,7 +24,7 @@ class SentimentAnalysisResponse(BaseModel):
     )
     request_id: Optional[str] = Field(None, description="Unique request identifier")
 
-    @field_validator("sentiment")  # type: ignore[misc]
+    @validator("sentiment")
     @classmethod
     def validate_sentiment(cls, v: str) -> str:
         """Validate sentiment value."""
@@ -60,7 +48,7 @@ class AsyncJobResponse(BaseModel):
         description="Job creation time",
     )
 
-    @field_validator("status")  # type: ignore[misc]
+    @validator("status")
     @classmethod
     def validate_status(cls, v: str) -> str:
         """Validate status value."""
@@ -87,7 +75,7 @@ class JobStatusResponse(BaseModel):
     source_id: Optional[str] = Field(None, description="Source identifier")
     progress: Optional[int] = Field(None, description="Job progress percentage")
 
-    @field_validator("status")  # type: ignore[misc]
+    @validator("status")
     @classmethod
     def validate_status(cls, v: str) -> str:
         """Validate status value."""
@@ -108,7 +96,7 @@ class HealthResponse(BaseModel):
     version: str = Field(..., description="Service version")
     components: Dict[str, str] = Field(..., description="Component status")
 
-    @field_validator("status")  # type: ignore[misc]
+    @validator("status")
     @classmethod
     def validate_status(cls, v: str) -> str:
         """Validate health status value."""
@@ -125,7 +113,7 @@ class ErrorResponse(BaseModel):
     message: Optional[str] = Field(None, description="Error message")
     details: Optional[Dict[str, Any]] = Field(None, description="Error details")
 
-    @field_validator("error")  # type: ignore[misc]
+    @validator("error")
     @classmethod
     def validate_error(
         cls, v: Union[str, Dict[str, Any]]

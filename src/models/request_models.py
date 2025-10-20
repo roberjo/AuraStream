@@ -1,20 +1,8 @@
 """Request data models for AuraStream API."""
 
-from typing import Any, Dict, Optional, TypeVar
+from typing import Any, Dict, Optional
 
-from pydantic import BaseModel, Field
-
-try:
-    from pydantic import field_validator  # type: ignore
-
-    PYDANTIC_V2 = True
-except ImportError:
-    from pydantic import validator as field_validator
-
-    PYDANTIC_V2 = False
-
-# Type variable for model classes
-T = TypeVar("T")
+from pydantic import BaseModel, Field, validator
 
 
 class SentimentAnalysisRequest(BaseModel):
@@ -25,7 +13,7 @@ class SentimentAnalysisRequest(BaseModel):
         default=None, description="Analysis options"
     )
 
-    @field_validator("text")  # type: ignore[misc]
+    @validator("text")
     @classmethod
     def validate_text(cls, v: str) -> str:
         """Validate text input."""
@@ -33,7 +21,7 @@ class SentimentAnalysisRequest(BaseModel):
             raise ValueError("Text cannot be empty")
         return v.strip()
 
-    @field_validator("options")  # type: ignore[misc]
+    @validator("options")
     @classmethod
     def validate_options(cls, v: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         """Validate options."""
@@ -53,7 +41,7 @@ class AsyncSentimentAnalysisRequest(BaseModel):
         default=None, description="Analysis options"
     )
 
-    @field_validator("text")  # type: ignore[misc]
+    @validator("text")
     @classmethod
     def validate_text(cls, v: str) -> str:
         """Validate text input."""
@@ -61,7 +49,7 @@ class AsyncSentimentAnalysisRequest(BaseModel):
             raise ValueError("Text cannot be empty")
         return v.strip()
 
-    @field_validator("options")  # type: ignore[misc]
+    @validator("options")
     @classmethod
     def validate_options(cls, v: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         """Validate options."""
@@ -75,7 +63,7 @@ class JobStatusRequest(BaseModel):
 
     job_id: str = Field(..., description="Job identifier")
 
-    @field_validator("job_id")  # type: ignore[misc]
+    @validator("job_id")
     @classmethod
     def validate_job_id(cls, v: str) -> str:
         """Validate job ID format."""
