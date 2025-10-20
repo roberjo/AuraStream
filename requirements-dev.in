@@ -27,7 +27,7 @@ pre-commit>=3.6.0,<4.0.0
 pip-audit>=2.7.0,<3.0.0
 bandit>=1.7.0,<2.0.0
 pbr>=7.0.0,<8.0.0  # Required dependency for bandit
-# safety>=3.0.0,<4.0.0  # Temporarily disabled due to pydantic 2.x incompatibility
+safety>=3.6.0,<4.0.0  # Updated to support pydantic 2.x
 
 # Documentation
 sphinx>=7.2.0,<8.0.0
