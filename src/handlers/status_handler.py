@@ -61,17 +61,17 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # Create response
         # Handle datetime parsing with 'Z' suffix
         created_at_str = job_data["created_at"]
-        if created_at_str.endswith('Z'):
-            created_at_str = created_at_str[:-1] + '+00:00'
+        if created_at_str.endswith("Z"):
+            created_at_str = created_at_str[:-1] + "+00:00"
         created_at = datetime.fromisoformat(created_at_str)
-        
+
         completed_at = None
         if job_data.get("completed_at"):
             completed_at_str = job_data["completed_at"]
-            if completed_at_str.endswith('Z'):
-                completed_at_str = completed_at_str[:-1] + '+00:00'
+            if completed_at_str.endswith("Z"):
+                completed_at_str = completed_at_str[:-1] + "+00:00"
             completed_at = datetime.fromisoformat(completed_at_str)
-        
+
         response = JobStatusResponse(
             job_id=job_id,
             status=job_data["status"],
