@@ -29,6 +29,15 @@ class InputValidator:
         r"\b(ping|nslookup|traceroute)\b",
     ]
 
+    PATH_TRAVERSAL_PATTERNS = [
+        r"\.\./",
+        r"\.\.\\",
+        r"/etc/passwd",
+        r"/etc/shadow",
+        r"\\windows\\system32",
+        r"C:\\windows",
+    ]
+
     @classmethod
     def validate_text_security(cls, text: str) -> Dict[str, Any]:
         """
@@ -62,6 +71,17 @@ class InputValidator:
                         "type": "command_injection",
                         "pattern": pattern,
                         "severity": "critical",
+                    }
+                )
+
+        # Check for path traversal
+        for pattern in cls.PATH_TRAVERSAL_PATTERNS:
+            if re.search(pattern, text, re.IGNORECASE):
+                threats.append(
+                    {
+                        "type": "path_traversal",
+                        "pattern": pattern,
+                        "severity": "high",
                     }
                 )
 

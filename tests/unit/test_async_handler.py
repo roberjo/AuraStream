@@ -78,7 +78,7 @@ class TestAsyncHandler:
         body = json.loads(response["body"])
         assert body["error"]["code"] == "VALIDATION_ERROR"
         assert (
-            "String should have at most 1048576 characters" in body["error"]["message"]
+            "ensure this value has at most 1048576 characters" in body["error"]["message"]
         )
 
     def test_security_validation(self, lambda_context):

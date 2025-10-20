@@ -60,7 +60,7 @@ class TestSentimentAnalysisRequest:
         long_text = "x" * 5001  # Exceeds 5000 character limit
         with pytest.raises(ValidationError) as exc_info:
             SentimentAnalysisRequest(text=long_text)
-        assert "String should have at most 5000 characters" in str(exc_info.value)
+        assert "ensure this value has at most 5000 characters" in str(exc_info.value)
 
     def test_options_validation(self):
         """Test options validation."""
@@ -103,7 +103,7 @@ class TestAsyncSentimentAnalysisRequest:
         long_text = "x" * 1048577  # Exceeds 1MB limit
         with pytest.raises(ValidationError) as exc_info:
             AsyncSentimentAnalysisRequest(text=long_text, source_id="test")
-        assert "String should have at most 1048576 characters" in str(exc_info.value)
+        assert "ensure this value has at most 1048576 characters" in str(exc_info.value)
 
     def test_source_id_validation(self):
         """Test source_id validation."""
@@ -176,7 +176,7 @@ class TestSentimentAnalysisResponse:
             SentimentAnalysisResponse(
                 sentiment="INVALID", score=0.95, processing_time_ms=150
             )
-        assert "Input should be" in str(exc_info.value)
+        assert "Sentiment must be one of" in str(exc_info.value)
 
     def test_score_validation(self):
         """Test score validation."""
@@ -196,17 +196,17 @@ class TestAsyncJobResponse:
         response = AsyncJobResponse(
             job_id="job-123-456-789",
             status="SUBMITTED",
-            estimated_completion_time="2023-12-25T10:30:00Z",
+            estimated_completion="2023-12-25T10:30:00Z",
         )
         assert response.job_id == "job-123-456-789"
         assert response.status == "SUBMITTED"
-        assert response.estimated_completion_time == "2023-12-25T10:30:00Z"
+        assert response.estimated_completion == "2023-12-25T10:30:00Z"
 
     def test_status_validation(self):
         """Test status validation."""
         with pytest.raises(ValidationError) as exc_info:
             AsyncJobResponse(job_id="job-123", status="INVALID_STATUS")
-        assert "Input should be" in str(exc_info.value)
+        assert "Status must be one of" in str(exc_info.value)
 
 
 class TestJobStatusResponse:
@@ -263,7 +263,7 @@ class TestHealthResponse:
                 timestamp=datetime.now(timezone.utc),
                 components={},
             )
-        assert "Input should be" in str(exc_info.value)
+        assert "Status must be one of" in str(exc_info.value)
 
 
 class TestErrorResponse:

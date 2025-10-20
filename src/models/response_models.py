@@ -40,7 +40,7 @@ class AsyncJobResponse(BaseModel):
     job_id: str = Field(..., description="Job identifier")
     status: str = Field(..., description="Job status")
     message: Optional[str] = Field(None, description="Status message")
-    estimated_completion_time: Optional[str] = Field(
+    estimated_completion: Optional[str] = Field(
         None, description="Estimated completion time"
     )
     created_at: datetime = Field(

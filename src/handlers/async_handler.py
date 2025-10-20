@@ -127,7 +127,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             job_id=job_id,
             status="PROCESSING",
             message="Job submitted successfully",
-            estimated_completion=_calculate_estimated_completion(request.text),
+            estimated_completion=_calculate_estimated_completion(request.text).isoformat(),
             created_at=datetime.now(timezone.utc),
         )
 
