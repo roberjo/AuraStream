@@ -77,9 +77,11 @@ class TestAsyncHandler:
         assert response["statusCode"] == 400
         body = json.loads(response["body"])
         assert body["error"]["code"] == "VALIDATION_ERROR"
+        # Check for either Pydantic v1 or v2 error message format
+        error_message = body["error"]["message"]
         assert (
-            "ensure this value has at most 1048576 characters"
-            in body["error"]["message"]
+            "String should have at most 1048576 characters" in error_message
+            or "ensure this value has at most 1048576 characters" in error_message
         )
 
     def test_security_validation(self, lambda_context):

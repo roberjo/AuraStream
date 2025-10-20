@@ -110,7 +110,12 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         )
 
         # Cache the result
-        cache.store_result(request.text, response.dict())
+        cache.store_result(
+            request.text,
+            response.model_dump()
+            if hasattr(response, "model_dump")
+            else response.dict(),
+        )
 
         # Record metrics
         metrics.record_sentiment_analysis(
@@ -120,7 +125,13 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         )
 
         logger.info(f"Successfully processed request {request_id}")
-        return _create_success_response(response.dict(), request_id, False)
+        return _create_success_response(
+            response.model_dump()
+            if hasattr(response, "model_dump")
+            else response.dict(),
+            request_id,
+            False,
+        )
 
     except Exception as e:
         logger.error(f"Error processing request {request_id}: {str(e)}")
@@ -218,5 +229,9 @@ def _create_error_response(
     return {
         "statusCode": status_code,
         "headers": {"Content-Type": "application/json", "X-Request-ID": request_id},
-        "body": json_dumps(error_response.dict()),
+        "body": json_dumps(
+            error_response.model_dump()
+            if hasattr(error_response, "model_dump")
+            else error_response.dict()
+        ),
     }

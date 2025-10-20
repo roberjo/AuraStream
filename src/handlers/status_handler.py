@@ -93,7 +93,10 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
         logger.info(f"Retrieved status for job {job_id}: {job_data['status']}")
         return _create_success_response(
-            response.dict(), context.aws_request_id if context else "unknown"
+            response.model_dump()
+            if hasattr(response, "model_dump")
+            else response.dict(),
+            context.aws_request_id if context else "unknown",
         )
 
     except Exception as e:
@@ -164,5 +167,9 @@ def _create_error_response(
     return {
         "statusCode": status_code,
         "headers": {"Content-Type": "application/json", "X-Request-ID": request_id},
-        "body": json_dumps(error_response.dict()),
+        "body": json_dumps(
+            error_response.model_dump()
+            if hasattr(error_response, "model_dump")
+            else error_response.dict()
+        ),
     }

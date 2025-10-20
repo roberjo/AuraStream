@@ -60,7 +60,12 @@ class TestSentimentAnalysisRequest:
         long_text = "x" * 5001  # Exceeds 5000 character limit
         with pytest.raises(ValidationError) as exc_info:
             SentimentAnalysisRequest(text=long_text)
-        assert "ensure this value has at most 5000 characters" in str(exc_info.value)
+        # Check for either Pydantic v1 or v2 error message format
+        error_str = str(exc_info.value)
+        assert (
+            "String should have at most 5000 characters" in error_str
+            or "ensure this value has at most 5000 characters" in error_str
+        )
 
     def test_options_validation(self):
         """Test options validation."""
@@ -103,7 +108,12 @@ class TestAsyncSentimentAnalysisRequest:
         long_text = "x" * 1048577  # Exceeds 1MB limit
         with pytest.raises(ValidationError) as exc_info:
             AsyncSentimentAnalysisRequest(text=long_text, source_id="test")
-        assert "ensure this value has at most 1048576 characters" in str(exc_info.value)
+        # Check for either Pydantic v1 or v2 error message format
+        error_str = str(exc_info.value)
+        assert (
+            "String should have at most 1048576 characters" in error_str
+            or "ensure this value has at most 1048576 characters" in error_str
+        )
 
     def test_source_id_validation(self):
         """Test source_id validation."""

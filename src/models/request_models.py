@@ -1,8 +1,20 @@
 """Request data models for AuraStream API."""
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, TypeVar
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
+
+try:
+    from pydantic import field_validator  # type: ignore
+
+    PYDANTIC_V2 = True
+except ImportError:
+    from pydantic import validator as field_validator
+
+    PYDANTIC_V2 = False
+
+# Type variable for model classes
+T = TypeVar("T")
 
 
 class SentimentAnalysisRequest(BaseModel):
@@ -13,7 +25,7 @@ class SentimentAnalysisRequest(BaseModel):
         default=None, description="Analysis options"
     )
 
-    @validator("text")
+    @field_validator("text")  # type: ignore[misc]
     @classmethod
     def validate_text(cls, v: str) -> str:
         """Validate text input."""
@@ -21,7 +33,7 @@ class SentimentAnalysisRequest(BaseModel):
             raise ValueError("Text cannot be empty")
         return v.strip()
 
-    @validator("options")
+    @field_validator("options")  # type: ignore[misc]
     @classmethod
     def validate_options(cls, v: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         """Validate options."""
@@ -41,7 +53,7 @@ class AsyncSentimentAnalysisRequest(BaseModel):
         default=None, description="Analysis options"
     )
 
-    @validator("text")
+    @field_validator("text")  # type: ignore[misc]
     @classmethod
     def validate_text(cls, v: str) -> str:
         """Validate text input."""
@@ -49,7 +61,7 @@ class AsyncSentimentAnalysisRequest(BaseModel):
             raise ValueError("Text cannot be empty")
         return v.strip()
 
-    @validator("options")
+    @field_validator("options")  # type: ignore[misc]
     @classmethod
     def validate_options(cls, v: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         """Validate options."""
@@ -63,7 +75,7 @@ class JobStatusRequest(BaseModel):
 
     job_id: str = Field(..., description="Job identifier")
 
-    @validator("job_id")
+    @field_validator("job_id")  # type: ignore[misc]
     @classmethod
     def validate_job_id(cls, v: str) -> str:
         """Validate job ID format."""
