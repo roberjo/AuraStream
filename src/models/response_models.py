@@ -115,7 +115,9 @@ class ErrorResponse(BaseModel):
 
     @validator("error")
     @classmethod
-    def validate_error(cls, v: Union[str, Dict[str, Any]]) -> Union[str, Dict[str, Any]]:
+    def validate_error(
+        cls, v: Union[str, Dict[str, Any]]
+    ) -> Union[str, Dict[str, Any]]:
         """Validate error field."""
         if isinstance(v, str):
             return v
