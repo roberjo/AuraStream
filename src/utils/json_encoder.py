@@ -18,7 +18,7 @@ class AuraStreamJSONEncoder(json.JSONEncoder):
         elif isinstance(obj, Decimal):
             return float(obj)
         elif hasattr(obj, "model_dump"):
-            # Pydantic models
+            # Pydantic v2 models
             return obj.model_dump()
         elif hasattr(obj, "dict"):
             # Legacy Pydantic models
