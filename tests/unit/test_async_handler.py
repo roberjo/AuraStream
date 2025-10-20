@@ -34,7 +34,6 @@ class TestAsyncHandler:
             patch("src.handlers.async_handler._store_document") as mock_store_document,
             patch("src.handlers.async_handler._start_step_function") as mock_start_step,
         ):
-
             mock_store_job.return_value = True
             mock_store_document.return_value = True
             mock_start_step.return_value = True
@@ -135,7 +134,6 @@ class TestAsyncHandler:
             patch("src.handlers.async_handler._store_job") as mock_store_job,
             patch("src.handlers.async_handler._store_document") as mock_store_document,
         ):
-
             mock_store_job.return_value = True
             mock_store_document.return_value = False
 
@@ -162,7 +160,6 @@ class TestAsyncHandler:
             patch("src.handlers.async_handler._store_document") as mock_store_document,
             patch("src.handlers.async_handler._start_step_function") as mock_start_step,
         ):
-
             mock_store_job.return_value = True
             mock_store_document.return_value = True
             mock_start_step.return_value = False
