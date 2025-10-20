@@ -83,7 +83,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
         logger.info(f"Retrieved status for job {job_id}: {job_data['status']}")
         return _create_success_response(
-            response.model_dump(), context.aws_request_id if context else "unknown"
+            response.dict(), context.aws_request_id if context else "unknown"
         )
 
     except Exception as e:
@@ -117,7 +117,8 @@ def _get_job_status(job_id: str) -> Optional[Dict[str, Any]]:
         response = table.get_item(Key={"job_id": job_id})
 
         if "Item" in response:
-            return response["Item"]
+            item = response["Item"]
+            return dict(item) if isinstance(item, dict) else None
 
         return None
 
@@ -151,5 +152,5 @@ def _create_error_response(
     return {
         "statusCode": status_code,
         "headers": {"Content-Type": "application/json", "X-Request-ID": request_id},
-        "body": json_dumps(error_response.model_dump()),
+        "body": json_dumps(error_response.dict()),
     }

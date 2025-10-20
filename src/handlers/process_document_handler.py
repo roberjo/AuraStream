@@ -2,7 +2,7 @@
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 from src.monitoring.metrics import MetricsCollector
 from src.utils.aws_clients import aws_clients
@@ -104,7 +104,7 @@ def _get_document_from_s3(job_id: str) -> Optional[str]:
 
         document_text = response["Body"].read().decode("utf-8")
         logger.info(f"Retrieved document for job {job_id} from S3")
-        return document_text
+        return str(document_text)
 
     except Exception as e:
         logger.error(f"Error retrieving document for job {job_id}: {str(e)}")
@@ -249,7 +249,7 @@ def _update_job_status(
 
         update_expression = "SET #status = :status, #updated_at = :updated_at"
         expression_attribute_names = {"#status": "status", "#updated_at": "updated_at"}
-        expression_attribute_values = {
+        expression_attribute_values: Dict[str, Union[str, Dict[str, Any]]] = {
             ":status": status,
             ":updated_at": datetime.utcnow().isoformat(),
         }

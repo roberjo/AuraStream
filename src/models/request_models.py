@@ -2,7 +2,7 @@
 
 from typing import Any, Dict, Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, validator
 
 
 class SentimentAnalysisRequest(BaseModel):
@@ -13,17 +13,17 @@ class SentimentAnalysisRequest(BaseModel):
         default=None, description="Analysis options"
     )
 
-    @field_validator("text")
+    @validator("text")
     @classmethod
-    def validate_text(cls, v):
+    def validate_text(cls, v: str) -> str:
         """Validate text input."""
         if not v or not v.strip():
             raise ValueError("Text cannot be empty")
         return v.strip()
 
-    @field_validator("options")
+    @validator("options")
     @classmethod
-    def validate_options(cls, v):
+    def validate_options(cls, v: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         """Validate options."""
         if v is None:
             return v
@@ -55,17 +55,17 @@ class AsyncSentimentAnalysisRequest(BaseModel):
         default=None, description="Analysis options"
     )
 
-    @field_validator("text")
+    @validator("text")
     @classmethod
-    def validate_text(cls, v):
+    def validate_text(cls, v: str) -> str:
         """Validate text input."""
         if not v or not v.strip():
             raise ValueError("Text cannot be empty")
         return v.strip()
 
-    @field_validator("options")
+    @validator("options")
     @classmethod
-    def validate_options(cls, v):
+    def validate_options(cls, v: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         """Validate options."""
         if v is None:
             return v

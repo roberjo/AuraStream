@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 class MetricsCollector:
     """Collects and sends custom metrics to CloudWatch."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize metrics collector."""
         region = os.environ.get('AWS_REGION', 'us-east-1')
         self.cloudwatch = boto3.client('cloudwatch', region_name=region)
@@ -23,7 +23,7 @@ class MetricsCollector:
 
     def record_sentiment_analysis(
         self, sentiment: str, confidence: float, processing_time: int
-    ):
+    ) -> None:
         """
         Record sentiment analysis metrics.
 
@@ -73,7 +73,7 @@ class MetricsCollector:
         except Exception as e:
             logger.error(f"Error recording sentiment analysis metrics: {str(e)}")
 
-    def record_cache_hit(self):
+    def record_cache_hit(self) -> None:
         """Record cache hit metric."""
         try:
             self.cloudwatch.put_metric_data(
@@ -95,7 +95,7 @@ class MetricsCollector:
         except Exception as e:
             logger.error(f"Error recording cache hit metric: {str(e)}")
 
-    def record_cache_miss(self):
+    def record_cache_miss(self) -> None:
         """Record cache miss metric."""
         try:
             self.cloudwatch.put_metric_data(
@@ -117,7 +117,7 @@ class MetricsCollector:
         except Exception as e:
             logger.error(f"Error recording cache miss metric: {str(e)}")
 
-    def record_pii_detection(self):
+    def record_pii_detection(self) -> None:
         """Record PII detection metric."""
         try:
             self.cloudwatch.put_metric_data(
@@ -139,7 +139,7 @@ class MetricsCollector:
         except Exception as e:
             logger.error(f"Error recording PII detection metric: {str(e)}")
 
-    def record_error(self, error_type: str = 'general'):
+    def record_error(self, error_type: str = 'general') -> None:
         """
         Record error metric.
 
@@ -169,7 +169,7 @@ class MetricsCollector:
 
     def record_api_usage(
         self, endpoint: str, customer_id: str, response_time: int, status_code: int
-    ):
+    ) -> None:
         """
         Record API usage metrics.
 
@@ -220,7 +220,7 @@ class MetricsCollector:
         value: float,
         unit: str = 'Count',
         dimensions: Optional[Dict[str, str]] = None,
-    ):
+    ) -> None:
         """
         Record custom business metric.
 
@@ -236,8 +236,8 @@ class MetricsCollector:
             ]
 
             if dimensions:
-                for key, value in dimensions.items():
-                    metric_dimensions.append({'Name': key, 'Value': value})
+                for key, dim_value in dimensions.items():
+                    metric_dimensions.append({'Name': key, 'Value': dim_value})
 
             self.cloudwatch.put_metric_data(
                 Namespace=self.namespace,

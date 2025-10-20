@@ -110,7 +110,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         )
 
         # Cache the result
-        cache.store_result(request.text, response.model_dump())
+        cache.store_result(request.text, response.dict())
 
         # Record metrics
         metrics.record_sentiment_analysis(
@@ -120,7 +120,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         )
 
         logger.info(f"Successfully processed request {request_id}")
-        return _create_success_response(response.model_dump(), request_id, False)
+        return _create_success_response(response.dict(), request_id, False)
 
     except Exception as e:
         logger.error(f"Error processing request {request_id}: {str(e)}")
@@ -152,7 +152,7 @@ def _analyze_sentiment(text: str, options: Optional[Dict[str, Any]]) -> Dict[str
     }
 
     response = comprehend.detect_sentiment(**params)
-    return response
+    return dict(response) if response else {}
 
 
 def _get_sentiment_score(sentiment_result: Dict[str, Any]) -> float:
@@ -177,7 +177,8 @@ def _get_sentiment_score(sentiment_result: Dict[str, Any]) -> float:
         "MIXED": "Mixed",
     }
     sentiment_key = sentiment_key_map.get(sentiment, sentiment)
-    return scores.get(sentiment_key, 0.0)
+    score = scores.get(sentiment_key, 0.0)
+    return float(score) if isinstance(score, (int, float)) else 0.0
 
 
 def _create_success_response(
@@ -215,5 +216,5 @@ def _create_error_response(
     return {
         "statusCode": status_code,
         "headers": {"Content-Type": "application/json", "X-Request-ID": request_id},
-        "body": json_dumps(error_response.model_dump()),
+        "body": json_dumps(error_response.dict()),
     }

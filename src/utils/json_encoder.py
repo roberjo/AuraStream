@@ -26,6 +26,6 @@ class AuraStreamJSONEncoder(json.JSONEncoder):
         return super().default(obj)
 
 
-def json_dumps(obj: Any, **kwargs) -> str:
+def json_dumps(obj: Any, **kwargs: Any) -> str:
     """JSON dumps with custom encoder."""
     return json.dumps(obj, cls=AuraStreamJSONEncoder, **kwargs)

@@ -2,6 +2,7 @@
 
 import boto3
 from botocore.config import Config
+from typing import Any, Dict
 
 
 class AWSClientManager:
@@ -16,9 +17,9 @@ class AWSClientManager:
             read_timeout=30,
             connect_timeout=10,
         )
-        self._clients = {}
+        self._clients: Dict[str, Any] = {}
 
-    def get_comprehend_client(self):
+    def get_comprehend_client(self) -> Any:
         """Get Amazon Comprehend client."""
         if "comprehend" not in self._clients:
             self._clients["comprehend"] = boto3.client(
@@ -26,7 +27,7 @@ class AWSClientManager:
             )
         return self._clients["comprehend"]
 
-    def get_dynamodb_resource(self):
+    def get_dynamodb_resource(self) -> Any:
         """Get DynamoDB resource."""
         if "dynamodb" not in self._clients:
             self._clients["dynamodb"] = boto3.resource(
@@ -34,7 +35,7 @@ class AWSClientManager:
             )
         return self._clients["dynamodb"]
 
-    def get_s3_client(self):
+    def get_s3_client(self) -> Any:
         """Get S3 client."""
         if "s3" not in self._clients:
             self._clients["s3"] = boto3.client(
@@ -42,7 +43,7 @@ class AWSClientManager:
             )
         return self._clients["s3"]
 
-    def get_stepfunctions_client(self):
+    def get_stepfunctions_client(self) -> Any:
         """Get Step Functions client."""
         if "stepfunctions" not in self._clients:
             self._clients["stepfunctions"] = boto3.client(

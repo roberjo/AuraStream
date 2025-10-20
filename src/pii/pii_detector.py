@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class PIIDetector:
     """Detects personally identifiable information in text."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize PII detector."""
         self.comprehend = aws_clients.get_comprehend_client()
 
@@ -104,7 +104,7 @@ class PIIDetector:
         Returns:
             Dictionary of entity types and counts
         """
-        categories = {}
+        categories: Dict[str, int] = {}
 
         for entity in entities:
             entity_type = entity.get("Type", "UNKNOWN")

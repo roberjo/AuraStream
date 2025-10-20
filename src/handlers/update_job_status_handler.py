@@ -2,7 +2,7 @@
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 from src.monitoring.metrics import MetricsCollector
 from src.utils.aws_clients import aws_clients
@@ -26,8 +26,8 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # Extract job information from event
         job_id = event.get("job_id")
         status = event.get("status", "PROCESSING")
-        result = event.get("result")
-        error = event.get("error")
+        job_result = event.get("result")
+        job_error = event.get("error")
 
         if not job_id:
             raise ValueError("Job ID is required")
@@ -35,7 +35,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         logger.info(f"Updating job {job_id} status to {status}")
 
         # Update job status in DynamoDB
-        success = _update_job_status(job_id, status, result, error)
+        success = _update_job_status(job_id, status, job_result, job_error)
 
         if not success:
             raise ValueError(f"Failed to update job {job_id} status")
@@ -90,7 +90,7 @@ def _update_job_status(
 
         update_expression = "SET #status = :status, #updated_at = :updated_at"
         expression_attribute_names = {"#status": "status", "#updated_at": "updated_at"}
-        expression_attribute_values = {
+        expression_attribute_values: Dict[str, Union[str, Dict[str, Any]]] = {
             ":status": status,
             ":updated_at": datetime.utcnow().isoformat(),
         }

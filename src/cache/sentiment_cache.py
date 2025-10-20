@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class SentimentCache:
     """Manages caching of sentiment analysis results."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize sentiment cache."""
         self.table_name = os.environ.get(
             'SENTIMENT_CACHE_TABLE', 'AuraStream-SentimentCache'
@@ -49,7 +49,8 @@ class SentimentCache:
                     return None
 
                 logger.info(f"Cache hit for key: {cache_key}")
-                return item.get('sentiment_result')
+                result = item.get('sentiment_result')
+                return result if isinstance(result, dict) else None
 
             logger.info(f"Cache miss for key: {cache_key}")
             return None
@@ -209,8 +210,8 @@ class SentimentCache:
             True if expired
         """
         ttl = item.get('ttl')
-        if not ttl:
+        if not ttl or not isinstance(ttl, (int, float)):
             return True
 
         current_time = datetime.utcnow().timestamp()
-        return current_time > ttl
+        return bool(current_time > ttl)

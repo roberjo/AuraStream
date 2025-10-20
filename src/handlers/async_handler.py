@@ -142,7 +142,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         logger.info(
             f"Successfully submitted async job {job_id} for request {request_id}"
         )
-        return _create_success_response(response.model_dump(), request_id)
+        return _create_success_response(response.dict(), request_id)
 
     except Exception as e:
         logger.error(f"Error processing async request {request_id}: {str(e)}")
@@ -328,5 +328,5 @@ def _create_error_response(
     return {
         "statusCode": status_code,
         "headers": {"Content-Type": "application/json", "X-Request-ID": request_id},
-        "body": json_dumps(error_response.model_dump()),
+        "body": json_dumps(error_response.dict()),
     }
