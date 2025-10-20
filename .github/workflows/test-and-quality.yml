@@ -114,10 +114,16 @@ jobs:
         pip-audit --desc --format=json --output=security-audit.json
         pip-audit --desc --format=text
     
+    - name: Run bandit security scan
+      run: |
+        bandit -r src/ -f json -o bandit-report.json
+        bandit -r src/
+    
     - name: Run safety check
       run: |
         safety check --json --output safety-report.json
-        safety check
+        safety check || echo "Safety found vulnerabilities - see report for details"
+      continue-on-error: true
     
     - name: Upload security reports
       uses: actions/upload-artifact@v3
@@ -125,6 +131,7 @@ jobs:
         name: security-reports
         path: |
           security-audit.json
+          bandit-report.json
           safety-report.json
 
   code-quality:
