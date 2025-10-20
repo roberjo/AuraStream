@@ -71,6 +71,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             result=job_data.get("result"),
             error=job_data.get("error"),
             source_id=job_data.get("source_id"),
+            progress=job_data.get("progress"),
         )
 
         # Record metrics
@@ -143,10 +144,11 @@ def _create_error_response(
     error_response = ErrorResponse(
         error={
             "code": error_code,
-            "message": message,
             "request_id": request_id,
             "timestamp": datetime.now(timezone.utc).isoformat(),
-        }
+        },
+        message=message,
+        details={"request_id": request_id},
     )
 
     return {

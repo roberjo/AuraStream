@@ -125,4 +125,3 @@ class ErrorResponse(BaseModel):
             return v
         else:
             raise ValueError("Error must be a string or dictionary")
-        return v

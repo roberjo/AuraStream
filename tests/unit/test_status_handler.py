@@ -191,7 +191,7 @@ class TestStatusHandler:
             assert response["statusCode"] == 500
             body = json.loads(response["body"])
             assert body["error"]["code"] == "INTERNAL_ERROR"
-            assert "An internal error occurred" in body["error"]["message"]
+            assert "An internal error occurred" in body["message"]
 
     def test_get_job_status_function(self):
         """Test _get_job_status function."""
