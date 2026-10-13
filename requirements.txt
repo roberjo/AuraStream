@@ -6,8 +6,8 @@ annotated-types==0.7.0
 async-timeout==4.0.3
 attrs==25.4.0
 awslambdaric==3.1.1
-boto3==1.40.55
-botocore==1.40.55
+boto3==1.43.111
+botocore==1.43.112
 cffi==2.0.0
 cryptography==41.0.7
 frozenlist==1.8.0
@@ -21,10 +21,12 @@ pydantic==2.12.3
 pydantic-core==2.41.4
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.0
-s3transfer==0.14.0
+s3transfer==0.19.2
 simplejson==3.20.2
 six==1.17.0
+snapshot-restore-py==1.0.0
 structlog==25.5.0
 typing-extensions==4.15.0
+typing-inspection==0.4.4
 urllib3==1.26.20
 yarl==1.22.0
