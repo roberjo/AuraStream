@@ -27,15 +27,18 @@ class TestProcessDocumentHandler:
             "options": {"language_code": "en"},
         }
 
-        with patch(
-            "src.handlers.process_document_handler._get_document_from_s3"
-        ) as mock_get_doc, patch(
-            "src.handlers.process_document_handler._process_with_comprehend"
-        ) as mock_process, patch(
-            "src.handlers.process_document_handler._update_job_status"
-        ) as mock_update, patch(
-            "src.handlers.process_document_handler.metrics"
-        ) as mock_metrics:
+        with (
+            patch(
+                "src.handlers.process_document_handler._get_document_from_s3"
+            ) as mock_get_doc,
+            patch(
+                "src.handlers.process_document_handler._process_with_comprehend"
+            ) as mock_process,
+            patch(
+                "src.handlers.process_document_handler._update_job_status"
+            ) as mock_update,
+            patch("src.handlers.process_document_handler.metrics") as mock_metrics,
+        ):
             mock_get_doc.return_value = "This is a test document"
             mock_process.return_value = {
                 "Sentiment": "POSITIVE",
@@ -62,11 +65,12 @@ class TestProcessDocumentHandler:
         mock_context = Mock()
         event = {"options": {"language_code": "en"}}
 
-        with patch(
-            "src.handlers.process_document_handler._update_job_status"
-        ) as mock_update, patch(
-            "src.handlers.process_document_handler.metrics"
-        ) as mock_metrics:
+        with (
+            patch(
+                "src.handlers.process_document_handler._update_job_status"
+            ) as mock_update,
+            patch("src.handlers.process_document_handler.metrics") as mock_metrics,
+        ):
             with pytest.raises(ValueError, match="Job ID is required"):
                 lambda_handler(event, mock_context)
 
@@ -81,13 +85,15 @@ class TestProcessDocumentHandler:
             "options": {"language_code": "en"},
         }
 
-        with patch(
-            "src.handlers.process_document_handler._get_document_from_s3"
-        ) as mock_get_doc, patch(
-            "src.handlers.process_document_handler._update_job_status"
-        ) as mock_update, patch(
-            "src.handlers.process_document_handler.metrics"
-        ) as mock_metrics:
+        with (
+            patch(
+                "src.handlers.process_document_handler._get_document_from_s3"
+            ) as mock_get_doc,
+            patch(
+                "src.handlers.process_document_handler._update_job_status"
+            ) as mock_update,
+            patch("src.handlers.process_document_handler.metrics") as mock_metrics,
+        ):
             mock_get_doc.return_value = None
 
             with pytest.raises(ValueError, match="Document not found"):
@@ -98,9 +104,10 @@ class TestProcessDocumentHandler:
 
     def test_get_document_from_s3_success(self):
         """Test successful document retrieval from S3."""
-        with patch(
-            "src.handlers.process_document_handler.aws_clients"
-        ) as mock_aws, patch.dict(os.environ, {"DOCUMENTS_BUCKET": "test-bucket"}):
+        with (
+            patch("src.handlers.process_document_handler.aws_clients") as mock_aws,
+            patch.dict(os.environ, {"DOCUMENTS_BUCKET": "test-bucket"}),
+        ):
             mock_s3 = Mock()
             mock_response = {"Body": Mock()}
             mock_response["Body"].read.return_value = b"Test document content"
@@ -179,14 +186,18 @@ class TestProcessDocumentHandler:
 
     def test_process_large_text_with_comprehend(self):
         """Test batch processing of large text."""
-        with patch(
-            "src.handlers.process_document_handler.aws_clients"
-        ) as mock_aws, patch("uuid.uuid4") as mock_uuid, patch.dict(
-            os.environ,
-            {
-                "DOCUMENTS_BUCKET": "test-bucket",
-                "COMPREHEND_ROLE_ARN": "arn:aws:iam::123456789012:role/ComprehendRole",
-            },
+        with (
+            patch("src.handlers.process_document_handler.aws_clients") as mock_aws,
+            patch("uuid.uuid4") as mock_uuid,
+            patch.dict(
+                os.environ,
+                {
+                    "DOCUMENTS_BUCKET": "test-bucket",
+                    "COMPREHEND_ROLE_ARN": (
+                        "arn:aws:iam::123456789012:role/ComprehendRole"
+                    ),
+                },
+            ),
         ):
             mock_comprehend = Mock()
             mock_s3 = Mock()
@@ -223,9 +234,10 @@ class TestProcessDocumentHandler:
 
     def test_update_job_status_success(self):
         """Test successful job status update."""
-        with patch(
-            "src.handlers.process_document_handler.aws_clients"
-        ) as mock_aws, patch.dict(os.environ, {"JOB_RESULTS_TABLE": "test-table"}):
+        with (
+            patch("src.handlers.process_document_handler.aws_clients") as mock_aws,
+            patch.dict(os.environ, {"JOB_RESULTS_TABLE": "test-table"}),
+        ):
             mock_dynamodb = Mock()
             mock_table = Mock()
             mock_dynamodb.Table.return_value = mock_table
@@ -240,9 +252,10 @@ class TestProcessDocumentHandler:
 
     def test_update_job_status_with_error(self):
         """Test job status update with error information."""
-        with patch(
-            "src.handlers.process_document_handler.aws_clients"
-        ) as mock_aws, patch.dict(os.environ, {"JOB_RESULTS_TABLE": "test-table"}):
+        with (
+            patch("src.handlers.process_document_handler.aws_clients") as mock_aws,
+            patch.dict(os.environ, {"JOB_RESULTS_TABLE": "test-table"}),
+        ):
             mock_dynamodb = Mock()
             mock_table = Mock()
             mock_dynamodb.Table.return_value = mock_table

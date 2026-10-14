@@ -79,15 +79,12 @@ class TestHealthHandler:
 
     def test_check_components(self):
         """Test component health checking."""
-        with patch(
-            "src.handlers.health_handler._check_dynamodb"
-        ) as mock_dynamodb, patch(
-            "src.handlers.health_handler._check_s3"
-        ) as mock_s3, patch(
-            "src.handlers.health_handler._check_comprehend"
-        ) as mock_comprehend, patch(
-            "src.handlers.health_handler._check_lambda"
-        ) as mock_lambda:
+        with (
+            patch("src.handlers.health_handler._check_dynamodb") as mock_dynamodb,
+            patch("src.handlers.health_handler._check_s3") as mock_s3,
+            patch("src.handlers.health_handler._check_comprehend") as mock_comprehend,
+            patch("src.handlers.health_handler._check_lambda") as mock_lambda,
+        ):
             mock_dynamodb.return_value = "healthy"
             mock_s3.return_value = "healthy"
             mock_comprehend.return_value = "healthy"
