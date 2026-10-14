@@ -145,9 +145,11 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             f"Successfully submitted async job {job_id} for request {request_id}"
         )
         return _create_success_response(
-            response.model_dump()
-            if hasattr(response, "model_dump")
-            else response.dict(),
+            (
+                response.model_dump()
+                if hasattr(response, "model_dump")
+                else response.dict()
+            ),
             request_id,
         )
 

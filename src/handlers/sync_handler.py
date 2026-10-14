@@ -112,9 +112,11 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # Cache the result
         cache.store_result(
             request.text,
-            response.model_dump()
-            if hasattr(response, "model_dump")
-            else response.dict(),
+            (
+                response.model_dump()
+                if hasattr(response, "model_dump")
+                else response.dict()
+            ),
         )
 
         # Record metrics
@@ -126,9 +128,11 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
         logger.info(f"Successfully processed request {request_id}")
         return _create_success_response(
-            response.model_dump()
-            if hasattr(response, "model_dump")
-            else response.dict(),
+            (
+                response.model_dump()
+                if hasattr(response, "model_dump")
+                else response.dict()
+            ),
             request_id,
             False,
         )

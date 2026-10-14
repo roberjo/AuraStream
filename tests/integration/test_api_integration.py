@@ -27,9 +27,7 @@ class TestAPIIntegration:
         cache_table = dynamodb.create_table(
             TableName="test-sentiment-cache",
             KeySchema=[{"AttributeName": "text_hash", "KeyType": "HASH"}],
-            AttributeDefinitions=[
-                {"AttributeName": "text_hash", "AttributeType": "S"}
-            ],
+            AttributeDefinitions=[{"AttributeName": "text_hash", "AttributeType": "S"}],
             BillingMode="PAY_PER_REQUEST",
         )
 
@@ -37,9 +35,7 @@ class TestAPIIntegration:
         job_table = dynamodb.create_table(
             TableName="test-job-results",
             KeySchema=[{"AttributeName": "job_id", "KeyType": "HASH"}],
-            AttributeDefinitions=[
-                {"AttributeName": "job_id", "AttributeType": "S"}
-            ],
+            AttributeDefinitions=[{"AttributeName": "job_id", "AttributeType": "S"}],
             BillingMode="PAY_PER_REQUEST",
         )
 
@@ -257,32 +253,28 @@ class TestAPIIntegration:
         assert "Job not found" in body["error"]["message"]
 
     @mock_aws
-    def test_health_endpoint_integration(
-        self, health_event, lambda_context
-    ):
+    def test_health_endpoint_integration(self, health_event, lambda_context):
         """Test health endpoint integration."""
         # Set up mocked AWS services
         dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
-        cache_table = dynamodb.create_table(
+        dynamodb.create_table(
             TableName="test-sentiment-cache",
             KeySchema=[{"AttributeName": "text_hash", "KeyType": "HASH"}],
-            AttributeDefinitions=[
-                {"AttributeName": "text_hash", "AttributeType": "S"}
-            ],
+            AttributeDefinitions=[{"AttributeName": "text_hash", "AttributeType": "S"}],
             BillingMode="PAY_PER_REQUEST",
         )
-        
+
         s3 = boto3.client("s3", region_name="us-east-1")
         s3.create_bucket(Bucket="test-aurastream-documents")
-        
+
         comprehend = boto3.client("comprehend", region_name="us-east-1")
-        
+
         # Patch the aws_clients to use mocked services
         with patch("src.handlers.health_handler.aws_clients") as mock_clients:
             mock_clients.get_dynamodb_resource.return_value = dynamodb
             mock_clients.get_s3_client.return_value = s3
             mock_clients.get_comprehend_client.return_value = comprehend
-            
+
             # Call health handler
             response = health_handler(health_event, lambda_context)
 

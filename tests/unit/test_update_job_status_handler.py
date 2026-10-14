@@ -23,11 +23,12 @@ class TestUpdateJobStatusHandler:
             "error": None,
         }
 
-        with patch(
-            "src.handlers.update_job_status_handler._update_job_status"
-        ) as mock_update, patch(
-            "src.handlers.update_job_status_handler.metrics"
-        ) as mock_metrics:
+        with (
+            patch(
+                "src.handlers.update_job_status_handler._update_job_status"
+            ) as mock_update,
+            patch("src.handlers.update_job_status_handler.metrics") as mock_metrics,
+        ):
             mock_update.return_value = True
 
             response = lambda_handler(event, mock_context)
@@ -52,11 +53,12 @@ class TestUpdateJobStatusHandler:
             "error": {"error": "Processing failed"},
         }
 
-        with patch(
-            "src.handlers.update_job_status_handler._update_job_status"
-        ) as mock_update, patch(
-            "src.handlers.update_job_status_handler.metrics"
-        ) as mock_metrics:
+        with (
+            patch(
+                "src.handlers.update_job_status_handler._update_job_status"
+            ) as mock_update,
+            patch("src.handlers.update_job_status_handler.metrics") as mock_metrics,
+        ):
             mock_update.return_value = True
 
             response = lambda_handler(event, mock_context)
@@ -80,11 +82,12 @@ class TestUpdateJobStatusHandler:
             "error": None,
         }
 
-        with patch(
-            "src.handlers.update_job_status_handler._update_job_status"
-        ) as mock_update, patch(
-            "src.handlers.update_job_status_handler.metrics"
-        ) as mock_metrics:
+        with (
+            patch(
+                "src.handlers.update_job_status_handler._update_job_status"
+            ) as mock_update,
+            patch("src.handlers.update_job_status_handler.metrics") as mock_metrics,
+        ):
             mock_update.return_value = True
 
             response = lambda_handler(event, mock_context)
@@ -118,11 +121,12 @@ class TestUpdateJobStatusHandler:
             "result": {"sentiment": "POSITIVE"},
         }
 
-        with patch(
-            "src.handlers.update_job_status_handler._update_job_status"
-        ) as mock_update, patch(
-            "src.handlers.update_job_status_handler.metrics"
-        ) as mock_metrics:
+        with (
+            patch(
+                "src.handlers.update_job_status_handler._update_job_status"
+            ) as mock_update,
+            patch("src.handlers.update_job_status_handler.metrics") as mock_metrics,
+        ):
             mock_update.return_value = False
 
             with pytest.raises(ValueError, match="Failed to update job"):
@@ -152,9 +156,10 @@ class TestUpdateJobStatusHandler:
 
     def test_update_job_status_success_with_result(self):
         """Test successful job status update with result."""
-        with patch(
-            "src.handlers.update_job_status_handler.aws_clients"
-        ) as mock_aws, patch.dict(os.environ, {"JOB_RESULTS_TABLE": "test-table"}):
+        with (
+            patch("src.handlers.update_job_status_handler.aws_clients") as mock_aws,
+            patch.dict(os.environ, {"JOB_RESULTS_TABLE": "test-table"}),
+        ):
             mock_dynamodb = Mock()
             mock_table = Mock()
             mock_dynamodb.Table.return_value = mock_table
@@ -175,9 +180,10 @@ class TestUpdateJobStatusHandler:
 
     def test_update_job_status_success_with_error(self):
         """Test successful job status update with error."""
-        with patch(
-            "src.handlers.update_job_status_handler.aws_clients"
-        ) as mock_aws, patch.dict(os.environ, {"JOB_RESULTS_TABLE": "test-table"}):
+        with (
+            patch("src.handlers.update_job_status_handler.aws_clients") as mock_aws,
+            patch.dict(os.environ, {"JOB_RESULTS_TABLE": "test-table"}),
+        ):
             mock_dynamodb = Mock()
             mock_table = Mock()
             mock_dynamodb.Table.return_value = mock_table
@@ -200,9 +206,10 @@ class TestUpdateJobStatusHandler:
 
     def test_update_job_status_success_without_result_or_error(self):
         """Test successful job status update without result or error."""
-        with patch(
-            "src.handlers.update_job_status_handler.aws_clients"
-        ) as mock_aws, patch.dict(os.environ, {"JOB_RESULTS_TABLE": "test-table"}):
+        with (
+            patch("src.handlers.update_job_status_handler.aws_clients") as mock_aws,
+            patch.dict(os.environ, {"JOB_RESULTS_TABLE": "test-table"}),
+        ):
             mock_dynamodb = Mock()
             mock_table = Mock()
             mock_dynamodb.Table.return_value = mock_table
@@ -234,9 +241,10 @@ class TestUpdateJobStatusHandler:
 
     def test_update_job_status_with_both_result_and_error(self):
         """Test job status update with both result and error (edge case)."""
-        with patch(
-            "src.handlers.update_job_status_handler.aws_clients"
-        ) as mock_aws, patch.dict(os.environ, {"JOB_RESULTS_TABLE": "test-table"}):
+        with (
+            patch("src.handlers.update_job_status_handler.aws_clients") as mock_aws,
+            patch.dict(os.environ, {"JOB_RESULTS_TABLE": "test-table"}),
+        ):
             mock_dynamodb = Mock()
             mock_table = Mock()
             mock_dynamodb.Table.return_value = mock_table

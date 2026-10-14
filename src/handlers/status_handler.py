@@ -93,9 +93,11 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
         logger.info(f"Retrieved status for job {job_id}: {job_data['status']}")
         return _create_success_response(
-            response.model_dump()
-            if hasattr(response, "model_dump")
-            else response.dict(),
+            (
+                response.model_dump()
+                if hasattr(response, "model_dump")
+                else response.dict()
+            ),
             context.aws_request_id if context else "unknown",
         )
 

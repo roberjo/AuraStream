@@ -21,9 +21,7 @@ class TestAWSServicesIntegration:
         table = dynamodb.create_table(
             TableName="test-sentiment-cache",
             KeySchema=[{"AttributeName": "text_hash", "KeyType": "HASH"}],
-            AttributeDefinitions=[
-                {"AttributeName": "text_hash", "AttributeType": "S"}
-            ],
+            AttributeDefinitions=[{"AttributeName": "text_hash", "AttributeType": "S"}],
             BillingMode="PAY_PER_REQUEST",
         )
 

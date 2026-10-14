@@ -140,9 +140,10 @@ class TestAWSClientManager:
 
     def test_multiple_clients_caching(self):
         """Test that multiple clients are cached independently."""
-        with patch("src.utils.aws_clients.boto3.client") as mock_boto_client, patch(
-            "src.utils.aws_clients.boto3.resource"
-        ) as mock_boto_resource:
+        with (
+            patch("src.utils.aws_clients.boto3.client") as mock_boto_client,
+            patch("src.utils.aws_clients.boto3.resource") as mock_boto_resource,
+        ):
             mock_client = Mock()
             mock_resource = Mock()
             mock_boto_client.return_value = mock_client
